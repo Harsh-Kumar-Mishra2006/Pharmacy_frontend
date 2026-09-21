@@ -17,10 +17,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Footer from "./components/Footer";
-import AddMedicine from "./pages/admin/AddMedicine";
-import MyMedicines from "./pages/admin/AdminMedicines";
 import { MedicineProvider } from "./contexts/MedicineContext";
-import AdminMedicinesApproval from "./pages/admin/AdminSupplyApprovals";
 import Medicines from "./pages/Medicines";
 import { PurchaseProvider } from "./contexts/PurchaseContext";
 import PurchaseCheckout from "./pages/user/PurchaseCheckout";
@@ -28,6 +25,17 @@ import MyPurchases from "./pages/user/MyPurchases";
 import AdminPaymentVerification from "./pages/admin/AdminPaymentVerification";
 import { SupplyProvider } from "./contexts/SupplyContext";
 import { EnquiryProvider } from "./contexts/EnquiryContext";
+
+import SupplierCatalog from "./pages/supplier/SupplierCatalog";
+import CreateSupply from "./pages/supplier/CreateSupply";
+import MySupplies from "./pages/supplier/MySupplies";
+import SupplierEnquiries from "./pages/supplier/SupplierEnquiries";
+
+// Admin pages
+import AdminMedicines from "./pages/admin/AdminMedicines";
+import AddMedicine from "./pages/admin/AddMedicine";
+import AdminSupplyApprovals from "./pages/admin/AdminSupplyApprovals";
+import AdminEnquiries from "./pages/admin/AdminEnquiries";
 
 function App() {
   return (
@@ -54,30 +62,7 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
-                      <Route
-                        path="/supplier/medicines"
-                        element={
-                          <ProtectedRoute allowedRoles={["supplier"]}>
-                            <MyMedicines />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/supplier/medicines/add"
-                        element={
-                          <ProtectedRoute allowedRoles={["supplier"]}>
-                            <AddMedicine />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/medicines/approval"
-                        element={
-                          <ProtectedRoute allowedRoles={["admin"]}>
-                            <AdminMedicinesApproval />
-                          </ProtectedRoute>
-                        }
-                      />
+
                       {/* Customer routes — authenticated */}
                       <Route
                         path="/purchase/checkout"
@@ -107,6 +92,74 @@ function App() {
                       />
                       <Route path="/medicines" element={<Medicines />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
+
+                      {/* SUPPLIER */}
+                      <Route
+                        path="/supplier/catalog"
+                        element={
+                          <ProtectedRoute allowedRoles={["supplier"]}>
+                            <SupplierCatalog />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/supplier/supplies"
+                        element={
+                          <ProtectedRoute allowedRoles={["supplier"]}>
+                            <MySupplies />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/supplier/supplies/create"
+                        element={
+                          <ProtectedRoute allowedRoles={["supplier"]}>
+                            <CreateSupply />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/supplier/enquiries"
+                        element={
+                          <ProtectedRoute allowedRoles={["supplier"]}>
+                            <SupplierEnquiries />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* ADMIN */}
+                      <Route
+                        path="/admin/medicines"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminMedicines />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/medicines/add"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AddMedicine />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/supplies"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminSupplyApprovals />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/enquiries"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminEnquiries />
+                          </ProtectedRoute>
+                        }
+                      />
                     </Routes>
                   </main>
                   <Footer />

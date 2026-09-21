@@ -71,8 +71,23 @@ const Navbar: React.FC = () => {
             icon: <FaCapsules />,
           },
           {
-            path: "/admin/medicines/approval",
-            label: "Approval",
+            path: "/admin/medicines/add",
+            label: "Add Medicines",
+            icon: <FaCapsules />,
+          },
+          {
+            path: "/admin/medicines",
+            label: "My Medicines",
+            icon: <FaCapsules />,
+          },
+          {
+            path: "/admin/supplies",
+            label: "Supply Approvals",
+            icon: <FaExclamationCircle />,
+          },
+          {
+            path: "/admin/enquiries",
+            label: "Enquiries",
             icon: <FaExclamationCircle />,
           },
           { path: "/admin/users", label: "Users", icon: <FaUser /> },
@@ -80,23 +95,23 @@ const Navbar: React.FC = () => {
       case "supplier":
         return [
           {
-            path: "/medicines",
-            label: "Medicines",
+            path: "/supplier/catalog",
+            label: "My Catalog",
             icon: <FaCapsules />,
           },
           {
-            path: "/supplier/dashboard",
-            label: "Dashboard",
+            path: "/supplier/supplies/create",
+            label: "Create Supply",
             icon: <FaTachometerAlt />,
           },
           {
-            path: "/supplier/medicines",
-            label: "My Medicines",
+            path: "/supplier/supplies",
+            label: "My Supplies",
             icon: <FaCapsules />,
           },
           {
-            path: "/supplier/medicines/add",
-            label: "Add Medicine",
+            path: "/supplier/enquiries",
+            label: "Admin Enquiries",
             icon: <FaPlus />,
           },
         ];
