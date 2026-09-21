@@ -59,7 +59,7 @@ export interface ChangePasswordRequest {
 }
 
 // ============================================================
-// MEDICINE TYPES
+// MEDICINE TYPES (Admin-owned catalog only)
 // ============================================================
 
 export interface MedicalDetails {
@@ -120,8 +120,10 @@ export interface MedicineMetadata {
   reviews_count: number;
 }
 
-export type MedicineStatus = 'pending' | 'approved' | 'rejected' | 'inactive';
-
+/**
+ * Medicine = immutable catalog record created by ADMIN.
+ * No quantity, no price, no supplier here — those live on Supply.
+ */
 export interface Medicine {
   id: string;
   name: string;
@@ -131,28 +133,18 @@ export interface Medicine {
   medical_details: MedicalDetails;
   other_details: OtherDetails;
   metadata: MedicineMetadata;
-  quantity: number;
-  min_quantity_alert: number;
-  max_quantity?: number;
-  unit_price: number;
-  purchase_price?: number;
-  discount_percentage?: number;
-  status: MedicineStatus;
-  is_available: boolean;
-  approval_notes?: string;
   images: string[];
-  approved_at?: string;
-  approved_by?: string;
-  rejected_at?: string;
-  rejected_by?: string;
-  supplier_id: string;
-  supplier?: User;
-  approver?: User;
-  rejector?: User;
-  last_restocked_at?: string;
-  expiry_date?: string;
+  is_available: boolean;
+
+  // Admin who created it
+  created_by: string;
+  creator?: User;
+
   created_at?: string;
   updated_at?: string;
+
+  // Optional relation when listing from admin view
+  supplies?: Supply[];
 }
 
 export interface CreateMedicineRequest {
@@ -163,40 +155,15 @@ export interface CreateMedicineRequest {
   medical_details?: Partial<MedicalDetails>;
   other_details?: Partial<OtherDetails>;
   metadata?: Partial<MedicineMetadata>;
-  quantity: number;
-  min_quantity_alert?: number;
-  max_quantity?: number;
-  unit_price: number;
-  purchase_price?: number;
-  discount_percentage?: number;
-  expiry_date?: Date;
   images?: string[];
 }
 
 export interface UpdateMedicineRequest extends Partial<CreateMedicineRequest> {
-  status?: MedicineStatus;
   is_available?: boolean;
-  approval_notes?: string;
-}
-
-export interface UpdateQuantityRequest {
-  quantity: number;
-  operation: 'set' | 'add' | 'subtract';
-}
-
-export interface ApproveRejectRequest {
-  approval_notes?: string;
-  rejection_reason?: string;
 }
 
 export interface MedicineFilters {
   category?: string;
-  status?: string;
-  supplier_id?: string;
-  min_price?: number;
-  max_price?: number;
-  in_stock?: boolean;
-  low_stock?: boolean;
   is_available?: boolean;
   search?: string;
   page?: number;
@@ -205,23 +172,8 @@ export interface MedicineFilters {
 
 export interface MedicineStatistics {
   total: number;
-  approved: number;
-  pending: number;
-  rejected: number;
-  low_stock: number;
-  out_of_stock: number;
   categories: Array<{ category: string; count: number }>;
   category_count: number;
-}
-
-export interface SupplierSummary {
-  total: number;
-  approved: number;
-  pending: number;
-  rejected: number;
-  low_stock: number;
-  out_of_stock: number;
-  approval_rate: number;
 }
 
 export interface MedicineResponse {
@@ -238,7 +190,210 @@ export interface MedicineResponse {
 }
 
 // ============================================================
-// PURCHASE TYPES  (only ONE declaration — no duplicates)
+// SUPPLY TYPES  (Supplier → Admin)
+// ============================================================
+
+export type SupplyStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'received';
+
+export interface Supply {
+  id: string;
+
+  medicine_id: string;
+  supplier_id: string;
+
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+
+  notes?: string;
+  expiry_date?: string;
+
+  status: SupplyStatus;
+
+  // Approval workflow
+  approval_notes?: string;
+  approved_at?: string;
+  approved_by?: string;
+  rejected_at?: string;
+  rejected_by?: string;
+  received_at?: string;
+
+  created_at?: string;
+  updated_at?: string;
+
+  // Relations
+  medicine?: Medicine;
+  supplier?: User;
+  approver?: User;
+  rejector?: User;
+}
+
+export interface CreateSupplyRequest {
+  medicine_id: string;
+  quantity: number;
+  unit_price: number;
+  notes?: string;
+  expiry_date?: string;
+}
+
+export interface UpdateSupplyRequest {
+  quantity?: number;
+  unit_price?: number;
+  notes?: string;
+  expiry_date?: string;
+}
+
+export interface ApproveRejectSupplyRequest {
+  approval_notes?: string;
+  rejection_reason?: string;
+}
+
+export interface SupplyFilters {
+  status?: SupplyStatus;
+  medicine_id?: string;
+  supplier_id?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface SupplyStatistics {
+  total: number;
+  pending: number;
+  approved: number;
+  received: number;
+  rejected: number;
+  total_value: number;
+}
+
+export interface SupplierSupplySummary {
+  total: number;
+  pending: number;
+  approved: number;
+  received: number;
+  rejected: number;
+}
+
+export interface SupplyResponse {
+  success: boolean;
+  message: string;
+  data?: Supply | Supply[];
+  count?: number;
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  };
+}
+
+// ============================================================
+// ENQUIRY TYPES  (Admin → Supplier request)
+// ============================================================
+
+export type EnquiryStatus =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'cancelled'
+  | 'fulfilled';
+
+export interface Enquiry {
+  id: string;
+
+  medicine_id: string;
+  supplier_id: string;
+  requested_by: string;
+
+  requested_quantity: number;
+  target_unit_price?: number;
+
+  message?: string;
+
+  status: EnquiryStatus;
+
+  // Supplier response
+  response_message?: string;
+  responded_at?: string;
+
+  // Link to created Supply when supplier accepts
+  supply_id?: string;
+
+  // Cancellation
+  cancelled_at?: string;
+  cancelled_by?: string;
+
+  created_at?: string;
+  updated_at?: string;
+
+  // Relations
+  medicine?: Medicine;
+  supplier?: User;
+  requester?: User;
+  canceller?: User;
+  supply?: Supply;
+}
+
+export interface CreateEnquiryRequest {
+  medicine_id: string;
+  supplier_id: string;
+  requested_quantity: number;
+  target_unit_price?: number;
+  message?: string;
+}
+
+export interface AcceptEnquiryRequest {
+  unit_price: number;
+  notes?: string;
+  expiry_date?: string;
+  response_message?: string;
+}
+
+export interface RejectEnquiryRequest {
+  response_message: string;
+}
+
+export interface EnquiryFilters {
+  status?: EnquiryStatus;
+  medicine_id?: string;
+  supplier_id?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface EnquiryStatistics {
+  total: number;
+  pending: number;
+  accepted: number;
+  rejected: number;
+  cancelled: number;
+}
+
+export interface SupplierEnquirySummary {
+  total: number;
+  pending: number;
+  accepted: number;
+  rejected: number;
+}
+
+export interface EnquiryResponse {
+  success: boolean;
+  message: string;
+  data?: Enquiry | Enquiry[];
+  count?: number;
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  };
+}
+
+// ============================================================
+// PURCHASE TYPES  (unchanged)
 // ============================================================
 
 export type PurchaseStatus =
@@ -262,27 +417,23 @@ export interface Purchase {
   id: string;
   purchase_number: string;
 
-  // Customer
   customer_name: string;
   customer_email: string;
   customer_phone: string;
   customer_address: string;
 
-  // Medical info
   disease?: string;
   symptoms?: string;
   prescription_required: boolean;
   prescription_file?: string;
   prescription_notes?: string;
 
-  // Medicine snapshot
   medicine_id: string;
   medicine_name: string;
   medicine_price: number;
   quantity: number;
   total_amount: number;
 
-  // Payment summary
   payment_method: PaymentMethod;
   payment_status: PaymentStatus;
   payment_screenshot?: string;
@@ -291,13 +442,10 @@ export interface Purchase {
   payment_verification_notes?: string;
   transaction_id?: string;
 
-  // Purchase status
   status: PurchaseStatus;
 
-  // User (nullable for guest)
   user_id?: string;
 
-  // Timestamps
   purchased_at: string;
   confirmed_at?: string;
   shipped_at?: string;
@@ -305,15 +453,12 @@ export interface Purchase {
   cancelled_at?: string;
   cancellation_reason?: string;
 
-  // Notes
   notes?: string;
   delivery_instructions?: string;
 
-  // Server timestamps
   created_at?: string;
   updated_at?: string;
 
-  // Relations
   medicine?: Medicine;
   payment?: Payment;
   customer?: User;
@@ -366,7 +511,7 @@ export interface PurchaseStatistics {
 }
 
 // ============================================================
-// PAYMENT TYPES  (only ONE declaration)
+// PAYMENT TYPES
 // ============================================================
 
 export interface QRCodeData {
@@ -458,20 +603,62 @@ export interface MedicineContextType {
   isLoading: boolean;
   error: string | null;
   statistics: MedicineStatistics | null;
-  supplierSummary: SupplierSummary | null;
+
   getMedicines: (filters?: MedicineFilters) => Promise<void>;
   getMedicineById: (id: string) => Promise<void>;
   createMedicine: (data: CreateMedicineRequest) => Promise<Medicine>;
   updateMedicine: (id: string, data: UpdateMedicineRequest) => Promise<void>;
-  updateQuantity: (id: string, data: UpdateQuantityRequest) => Promise<void>;
-  approveMedicine: (id: string, notes?: string) => Promise<void>;
-  rejectMedicine: (id: string, reason: string) => Promise<void>;
-  revokeApproval: (id: string, reason?: string) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
   getStatistics: () => Promise<void>;
-  getSupplierSummary: () => Promise<void>;
-  getMedicinesBySupplier: (supplierId: string, status?: string) => Promise<void>;
   searchMedicines: (searchTerm: string) => Promise<void>;
+
+  clearSelected: () => void;
+  clearError: () => void;
+}
+
+export interface SupplyContextType {
+  supplies: Supply[];
+  selectedSupply: Supply | null;
+  statistics: SupplyStatistics | null;
+  supplierSummary: SupplierSupplySummary | null;
+  isLoading: boolean;
+  error: string | null;
+
+  createSupply: (data: CreateSupplyRequest) => Promise<Supply>;
+  updateSupply: (id: string, data: UpdateSupplyRequest) => Promise<void>;
+  deleteSupply: (id: string) => Promise<void>;
+  approveSupply: (id: string, notes?: string) => Promise<void>;
+  rejectSupply: (id: string, reason: string) => Promise<void>;
+  receiveSupply: (id: string) => Promise<void>;
+
+  getSupplies: (filters?: SupplyFilters) => Promise<void>;
+  getSupplyById: (id: string) => Promise<void>;
+  getSupplierSummary: () => Promise<void>;
+  getSuppliesBySupplier: (supplierId: string, status?: SupplyStatus) => Promise<void>;
+  getStatistics: () => Promise<void>;
+
+  clearSelected: () => void;
+  clearError: () => void;
+}
+
+export interface EnquiryContextType {
+  enquiries: Enquiry[];
+  selectedEnquiry: Enquiry | null;
+  statistics: EnquiryStatistics | null;
+  supplierSummary: SupplierEnquirySummary | null;
+  isLoading: boolean;
+  error: string | null;
+
+  createEnquiry: (data: CreateEnquiryRequest) => Promise<Enquiry>;
+  acceptEnquiry: (id: string, data: AcceptEnquiryRequest) => Promise<Enquiry>;
+  rejectEnquiry: (id: string, data: RejectEnquiryRequest) => Promise<Enquiry>;
+  cancelEnquiry: (id: string) => Promise<Enquiry>;
+
+  getEnquiries: (filters?: EnquiryFilters) => Promise<void>;
+  getEnquiryById: (id: string) => Promise<void>;
+  getSupplierSummary: () => Promise<void>;
+  getStatistics: () => Promise<void>;
+
   clearSelected: () => void;
   clearError: () => void;
 }
@@ -512,6 +699,10 @@ export interface PurchaseContextType {
 export interface RouteParams {
   id: string;
   role?: UserRole;
+  supplierId?: string;
+  medicineId?: string;
+  enquiryId?: string;
+  supplyId?: string;
 }
 
 export interface SearchParams {
@@ -521,4 +712,6 @@ export interface SearchParams {
   status?: string;
   category?: string;
   role?: string;
+  supplier_id?: string;
+  medicine_id?: string;
 }
