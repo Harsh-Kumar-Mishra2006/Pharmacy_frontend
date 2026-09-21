@@ -29,8 +29,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    // Role-appropriate landing pages
+    const fallbacks: Record<UserRole, string> = {
+      admin: "/admin/medicines",
+      supplier: "/supplier/supplies",
+      user: "/",
+    };
+    return <Navigate to={fallbacks[user.role] || "/"} replace />;
   }
 
   return <>{children}</>;
 };
+
+export default ProtectedRoute;
