@@ -7,6 +7,8 @@ import React, {
 } from "react";
 import {
   type Medicine,
+  type AvailableMedicine,
+  type AvailableMedicineFilters,
   type CreateMedicineRequest,
   type UpdateMedicineRequest,
   type MedicineFilters,
@@ -17,12 +19,16 @@ import { useAuth } from "./AuthContext";
 
 interface MedicineContextType {
   medicines: Medicine[];
+  availableMedicines: AvailableMedicine[];
   selectedMedicine: Medicine | null;
   isLoading: boolean;
   error: string | null;
   statistics: MedicineStatistics | null;
 
   getMedicines: (filters?: MedicineFilters) => Promise<void>;
+  getAvailableMedicines: (
+    filters?: AvailableMedicineFilters,
+  ) => Promise<AvailableMedicine[]>;
   getMedicineById: (id: string) => Promise<void>;
   createMedicine: (data: CreateMedicineRequest) => Promise<Medicine>;
   updateMedicine: (id: string, data: UpdateMedicineRequest) => Promise<void>;
@@ -46,6 +52,9 @@ export const MedicineProvider: React.FC<MedicineProviderProps> = ({
   children,
 }) => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [availableMedicines, setAvailableMedicines] = useState<
+    AvailableMedicine[]
+  >([]);
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(
     null,
   );
@@ -61,9 +70,10 @@ export const MedicineProvider: React.FC<MedicineProviderProps> = ({
     if (user?.role === "admin") {
       getStatistics();
       getMedicines({ limit: 50 });
-    } else if (user?.role === "supplier" || user?.role === "user") {
+    } else if (user?.role === "supplier") {
       getMedicines({ limit: 50 });
     }
+    // customers (user role) will call getAvailableMedicines from the page itself
   }, [isAuthenticated, user?.role]);
 
   // Get all medicines
@@ -217,6 +227,32 @@ export const MedicineProvider: React.FC<MedicineProviderProps> = ({
     }
   };
 
+  // Get customer-visible medicines (catalog + approved supplies)
+  const getAvailableMedicines = async (
+    filters?: AvailableMedicineFilters,
+  ): Promise<AvailableMedicine[]> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await MedicineService.getAvailableMedicines(filters);
+      if (response.success && response.data) {
+        const list = Array.isArray(response.data) ? response.data : [];
+        setAvailableMedicines(list);
+        return list;
+      }
+      throw new Error(
+        response.message || "Failed to fetch available medicines",
+      );
+    } catch (err: any) {
+      console.error("Get available medicines error:", err);
+      setError(err.message || "Failed to fetch available medicines");
+      setAvailableMedicines([]);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearSelected = (): void => setSelectedMedicine(null);
   const clearError = (): void => setError(null);
 
@@ -227,12 +263,14 @@ export const MedicineProvider: React.FC<MedicineProviderProps> = ({
     error,
     statistics,
     getMedicines,
+    availableMedicines,
     getMedicineById,
     createMedicine,
     updateMedicine,
     deleteMedicine,
     getStatistics,
     searchMedicines,
+    getAvailableMedicines,
     clearSelected,
     clearError,
   };
