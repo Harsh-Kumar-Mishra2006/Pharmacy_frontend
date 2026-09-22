@@ -715,3 +715,36 @@ export interface SearchParams {
   supplier_id?: string;
   medicine_id?: string;
 }
+
+// ============================================================
+// AVAILABLE MEDICINE (catalog + aggregated approved supplies)
+// ============================================================
+
+export interface AvailableMedicine {
+  id: string;
+  name: string;
+  generic_name?: string;
+  brand_name?: string;
+  category: string;
+  images: string[];
+  medical_details: MedicalDetails;
+  other_details: OtherDetails;
+  metadata: MedicineMetadata;
+  is_available: boolean;
+  created_by: string;
+  created_at?: string;
+  updated_at?: string;
+
+  // Aggregated from approved/received supplies
+  total_quantity: number;
+  min_price: number;
+  max_price: number;
+  in_stock: boolean;
+}
+
+export interface AvailableMedicineFilters {
+  category?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}

@@ -2,11 +2,14 @@ import Api from '../api/api';
 import {
   type ApiResponse,
   type Medicine,
+  type AvailableMedicine,
+  type AvailableMedicineFilters,
   type CreateMedicineRequest,
   type UpdateMedicineRequest,
   type MedicineFilters,
   type MedicineStatistics,
 } from '../types';
+
 
 class MedicineService {
   // Create a new medicine (Admin only)
@@ -113,7 +116,29 @@ class MedicineService {
     }
   }
 
-  
+  // NEW: Get customer-visible medicines (catalog + approved supplies)
+  public async getAvailableMedicines(
+    filters?: AvailableMedicineFilters,
+  ): Promise<ApiResponse<AvailableMedicine[]> & { pagination?: any }> {
+    try {
+      const params = new URLSearchParams();
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params.append(key, String(value));
+          }
+        });
+      }
+      const url = `/medicines/available${
+        params.toString() ? `?${params.toString()}` : ''
+      }`;
+      return await Api.get<AvailableMedicine[]>(url);
+    } catch (error: any) {
+      console.error('Get available medicines error:', error);
+      throw error;
+    }
+  }
 }
+
 
 export default new MedicineService();
