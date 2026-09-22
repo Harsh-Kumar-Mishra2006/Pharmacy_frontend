@@ -96,6 +96,7 @@ class MedicineService {
       throw error;
     }
   }
+  
 
   // Search medicines (public/authenticated)
   public async searchMedicines(
@@ -111,6 +112,8 @@ class MedicineService {
       throw error;
     }
   }
+
+  
 }
 
 export default new MedicineService();
