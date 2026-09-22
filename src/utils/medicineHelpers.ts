@@ -1,184 +1,154 @@
-import { type Medicine } from '../types';
+// src/utils/medicineHelpers.ts
+import {
+  type Medicine,
+  type AvailableMedicine,
+} from '../types';
 
-export const getMedicineStatusColor = (status: string): string => {
-  switch (status) {
-    case 'approved':
-      return 'success';
-    case 'pending':
-      return 'warning';
-    case 'rejected':
-      return 'danger';
-    case 'inactive':
-      return 'secondary';
-    default:
-      return 'info';
-  }
-};
+// ============================================================
+// GENERIC HELPERS (used anywhere)
+// ============================================================
 
-export const getMedicineStatusLabel = (status: string): string => {
-  switch (status) {
-    case 'approved':
-      return 'Approved';
-    case 'pending':
-      return 'Pending Approval';
-    case 'rejected':
-      return 'Rejected';
-    case 'inactive':
-      return 'Inactive';
-    default:
-      return status;
-  }
-};
-
-export const getStockStatus = (medicine: Medicine): 'in_stock' | 'low_stock' | 'out_of_stock' => {
-  if (medicine.quantity === 0) return 'out_of_stock';
-  if (medicine.quantity <= medicine.min_quantity_alert) return 'low_stock';
-  return 'in_stock';
-};
-
-export const getStockStatusColor = (medicine: Medicine): string => {
-  const status = getStockStatus(medicine);
-  switch (status) {
-    case 'in_stock':
-      return 'success';
-    case 'low_stock':
-      return 'warning';
-    case 'out_of_stock':
-      return 'danger';
-    default:
-      return 'info';
-  }
-};
-
-export const getStockStatusLabel = (medicine: Medicine): string => {
-  const status = getStockStatus(medicine);
-  switch (status) {
-    case 'in_stock':
-      return 'In Stock';
-    case 'low_stock':
-      return 'Low Stock';
-    case 'out_of_stock':
-      return 'Out of Stock';
-    default:
-      return 'Unknown';
-  }
-};
-
-export const calculateDiscountPrice = (price: number, discountPercentage: number): number => {
-  if (discountPercentage <= 0) return price;
-  return price - (price * (discountPercentage / 100));
-};
-
-export const formatPrice = (price: number): string => {
+export const formatPrice = (price: number | string | null | undefined): string => {
+  const n = Number(price);
+  if (!isFinite(n)) return '$0.00';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format(price);
+  }).format(n);
 };
 
-export const isMedicineExpired = (medicine: Medicine): boolean => {
-  if (!medicine.expiry_date) return false;
-  const expiryDate = new Date(medicine.expiry_date);
-  const today = new Date();
-  return expiryDate < today;
-};
-
-export const getDaysUntilExpiry = (medicine: Medicine): number | null => {
-  if (!medicine.expiry_date) return null;
-  const expiryDate = new Date(medicine.expiry_date);
-  const today = new Date();
-  const diffTime = expiryDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
-};
-
-export const getExpiryStatus = (medicine: Medicine): 'expired' | 'expiring_soon' | 'valid' => {
-  if (!medicine.expiry_date) return 'valid';
-  const daysUntilExpiry = getDaysUntilExpiry(medicine);
-  if (daysUntilExpiry === null) return 'valid';
-  if (daysUntilExpiry < 0) return 'expired';
-  if (daysUntilExpiry <= 30) return 'expiring_soon';
-  return 'valid';
-};
-
-export const getExpiryStatusColor = (medicine: Medicine): string => {
-  const status = getExpiryStatus(medicine);
-  switch (status) {
-    case 'expired':
-      return 'danger';
-    case 'expiring_soon':
-      return 'warning';
-    case 'valid':
-      return 'success';
-    default:
-      return 'info';
-  }
-};
-
-export const filterMedicines = (
-  medicines: Medicine[],
-  filters: {
-    search?: string;
-    category?: string;
-    status?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    inStock?: boolean;
-    lowStock?: boolean;
-  }
-): Medicine[] => {
-  return medicines.filter(medicine => {
-    // Search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      const matchesSearch = 
-        medicine.name.toLowerCase().includes(searchLower) ||
-        medicine.generic_name?.toLowerCase().includes(searchLower) ||
-        medicine.brand_name?.toLowerCase().includes(searchLower) ||
-        medicine.category.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
-
-    // Category filter
-    if (filters.category && medicine.category !== filters.category) {
-      return false;
-    }
-
-    // Status filter
-    if (filters.status && medicine.status !== filters.status) {
-      return false;
-    }
-
-    // Price range filter
-    if (filters.minPrice !== undefined && medicine.unit_price < filters.minPrice) {
-      return false;
-    }
-    if (filters.maxPrice !== undefined && medicine.unit_price > filters.maxPrice) {
-      return false;
-    }
-
-    // Stock filters
-    if (filters.inStock && medicine.quantity === 0) {
-      return false;
-    }
-    if (filters.lowStock && medicine.quantity > medicine.min_quantity_alert) {
-      return false;
-    }
-
-    return true;
+export const formatDate = (d?: string | Date | null): string => {
+  if (!d) return 'N/A';
+  const dt = typeof d === 'string' ? new Date(d) : d;
+  if (isNaN(dt.getTime())) return 'N/A';
+  return dt.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 };
 
-export const getCategoryOptions = (medicines: Medicine[]): string[] => {
-  const categories = new Set(medicines.map(m => m.category));
-  return Array.from(categories).sort();
+export const calculateDiscountPrice = (
+  price: number,
+  discountPercentage: number,
+): number => {
+  if (!discountPercentage || discountPercentage <= 0) return price;
+  return price - price * (discountPercentage / 100);
 };
 
-export const getUniqueSuppliers = (medicines: Medicine[]): string[] => {
-  const suppliers = new Set(
-    medicines
-      .filter(m => m.supplier)
-      .map(m => m.supplier!.id)
-  );
-  return Array.from(suppliers);
+// ============================================================
+// CATALOG HELPERS (Medicine — admin/supplier views)
+// ============================================================
+
+export const getMedicineDisplayName = (m: Medicine): string =>
+  m.generic_name ? `${m.name} (${m.generic_name})` : m.name;
+
+export const getMedicineShortLabel = (m: Medicine): string => {
+  const parts: string[] = [];
+  if (m.other_details?.form) {
+    parts.push(
+      m.other_details.form.charAt(0).toUpperCase() + m.other_details.form.slice(1),
+    );
+  }
+  if (m.other_details?.strength) parts.push(m.other_details.strength);
+  return parts.join(' · ') || '—';
+};
+
+export const getMedicineImage = (m: Medicine): string => m.images?.[0] || '';
+
+export const requiresPrescription = (m: Medicine): boolean =>
+  Boolean(m.metadata?.is_prescription_required);
+
+export const requiresColdChain = (m: Medicine): boolean =>
+  Boolean(m.metadata?.cold_chain_required);
+
+export const isHazardous = (m: Medicine): boolean =>
+  Boolean(m.metadata?.hazardous);
+
+export const getCategoryOptions = (medicines: Medicine[]): string[] =>
+  Array.from(new Set(medicines.map((m) => m.category))).sort();
+
+/**
+ * Status of the catalog entry itself (available / hidden).
+ * Old statuses (pending/approved/rejected) no longer apply to Medicine.
+ */
+export const getMedicineStatusLabel = (m: Medicine): string =>
+  m.is_available ? 'Available' : 'Hidden';
+
+export const getMedicineStatusColor = (m: Medicine): string =>
+  m.is_available ? 'success' : 'secondary';
+
+// ============================================================
+// AVAILABLE-MEDICINE HELPERS (customer view — aggregated supplies)
+// ============================================================
+
+export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
+
+const LOW_STOCK_THRESHOLD = 10;
+
+export const getStockStatus = (m: AvailableMedicine): StockStatus => {
+  if (!m || m.total_quantity <= 0) return 'out_of_stock';
+  if (m.total_quantity <= LOW_STOCK_THRESHOLD) return 'low_stock';
+  return 'in_stock';
+};
+
+export const getStockStatusColor = (m: AvailableMedicine): string => {
+  const s = getStockStatus(m);
+  return s === 'in_stock' ? 'success' : s === 'low_stock' ? 'warning' : 'danger';
+};
+
+export const getStockStatusLabel = (m: AvailableMedicine): string => {
+  const s = getStockStatus(m);
+  return s === 'in_stock' ? 'In Stock' : s === 'low_stock' ? 'Low Stock' : 'Out of Stock';
+};
+
+export const getPriceRange = (m: AvailableMedicine): string => {
+  const min = Number(m.min_price ?? 0);
+  const max = Number(m.max_price ?? 0);
+  if (!isFinite(min) || min === 0) return formatPrice(0);
+  if (min === max) return formatPrice(min);
+  return `${formatPrice(min)} – ${formatPrice(max)}`;
+};
+
+export const getEffectivePrice = (m: AvailableMedicine): number =>
+  Number(m.min_price ?? 0);
+
+export const canPurchase = (m: AvailableMedicine, quantity: number): boolean => {
+  if (!m || !m.in_stock) return false;
+  if (quantity < 1) return false;
+  if (quantity > m.total_quantity) return false;
+  return true;
+};
+
+// ============================================================
+// GENERIC FILTER (works with either shape)
+// ============================================================
+
+interface BaseFilterable {
+  name: string;
+  generic_name?: string;
+  brand_name?: string;
+  category: string;
+}
+
+export const filterMedicines = <T extends BaseFilterable>(
+  medicines: T[],
+  filters: {
+    search?: string;
+    category?: string;
+  },
+): T[] => {
+  return medicines.filter((m) => {
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      const matches =
+        m.name.toLowerCase().includes(s) ||
+        m.generic_name?.toLowerCase().includes(s) ||
+        m.brand_name?.toLowerCase().includes(s) ||
+        m.category.toLowerCase().includes(s);
+      if (!matches) return false;
+    }
+    if (filters.category && m.category !== filters.category) return false;
+    return true;
+  });
 };

@@ -20,10 +20,10 @@ import {
   FaImage,
   FaClipboardCheck,
 } from "react-icons/fa";
-import { type Medicine, type Purchase } from "../../types";
+import { type AvailableMedicine, type Purchase } from "../../types";
 
 interface CheckoutState {
-  medicine: Medicine;
+  medicine: AvailableMedicine;
   quantity: number;
 }
 
@@ -45,10 +45,10 @@ const PurchaseCheckout: React.FC = () => {
   if (!state?.medicine) return null;
 
   const { medicine, quantity } = state;
-  const totalAmount =
-    Number(medicine.unit_price) *
-    (1 - (medicine.discount_percentage || 0) / 100) *
-    quantity;
+
+  // after
+  const unitPrice = Number(medicine.min_price ?? 0);
+  const totalAmount = unitPrice * quantity;
 
   // ---------- form ----------
   const [formData, setFormData] = useState({
@@ -669,7 +669,7 @@ const PurchaseCheckout: React.FC = () => {
                     </p>
                     <p className="text-xs text-gray-500">{medicine.category}</p>
                     <p className="text-sm font-medium text-light-orange mt-1">
-                      ₹{Number(medicine.unit_price).toFixed(2)} each
+                      ${unitPrice.toFixed(2)} each
                     </p>
                   </div>
                 </div>
@@ -679,13 +679,9 @@ const PurchaseCheckout: React.FC = () => {
                     <span className="text-gray-600">Quantity</span>
                     <span className="font-medium">{quantity}</span>
                   </div>
-                  {medicine.discount_percentage &&
-                    medicine.discount_percentage > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Discount</span>
-                        <span>{medicine.discount_percentage}%</span>
-                      </div>
-                    )}
+                  <span className="text-2xl font-bold text-light-orange">
+                    ${totalAmount.toFixed(2)}
+                  </span>
                   <div className="flex justify-between text-gray-600">
                     <span>Delivery</span>
                     <span className="text-green-600">Free</span>
