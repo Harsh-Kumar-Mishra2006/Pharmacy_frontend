@@ -15,7 +15,6 @@ import {
   FaSync,
   FaTimes,
   FaExclamationCircle,
-  FaDollarSign,
   FaTrash,
 } from "react-icons/fa";
 import { type Supply, type SupplyStatus } from "../../types";
@@ -334,16 +333,15 @@ const MySupplies: React.FC = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs">Unit Price</p>
+                      <p className="text-gray-500 text-xs">Unit Price(in ₹)</p>
                       <p className="font-semibold text-gray-800 flex items-center gap-0.5">
-                        <FaDollarSign className="text-xs" />
                         {Number(sp.unit_price).toFixed(2)}
                       </p>
                     </div>
                     <div className="col-span-2">
                       <p className="text-gray-500 text-xs">Total</p>
                       <p className="font-semibold text-light-orange">
-                        ${Number(sp.total_price).toFixed(2)}
+                        ₹{Number(sp.total_price).toFixed(2)}
                       </p>
                     </div>
                     <div className="col-span-2">
@@ -435,11 +433,11 @@ const MySupplies: React.FC = () => {
                 <Detail label="Quantity" value={String(selected.quantity)} />
                 <Detail
                   label="Unit Price"
-                  value={`$${Number(selected.unit_price).toFixed(2)}`}
+                  value={`₹${Number(selected.unit_price).toFixed(2)}`}
                 />
                 <Detail
                   label="Total"
-                  value={`$${Number(selected.total_price).toFixed(2)}`}
+                  value={`₹${Number(selected.total_price).toFixed(2)}`}
                 />
                 <Detail
                   label="Expiry"

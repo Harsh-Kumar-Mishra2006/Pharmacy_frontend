@@ -6,7 +6,7 @@ import { useSupply } from "../../contexts/SupplyContext";
 import {
   FaTruck,
   FaBoxes,
-  FaDollarSign,
+  // FaDollarSign,
   FaCalendarAlt,
   FaArrowLeft,
   FaCheck,
@@ -201,10 +201,10 @@ const CreateSupply: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Unit Price <span className="text-red-500">*</span>
+                Unit Price(in ₹) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <FaDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                {/* <FaDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /> */}{" "}
                 <input
                   type="number"
                   value={unitPrice}
@@ -252,7 +252,7 @@ const CreateSupply: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Total Value</span>
               <span className="text-2xl font-bold text-light-orange">
-                ${total.toFixed(2)}
+                ₹{total.toFixed(2)}
               </span>
             </div>
           </div>
