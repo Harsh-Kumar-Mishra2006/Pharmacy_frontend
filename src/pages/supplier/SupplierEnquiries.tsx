@@ -9,7 +9,6 @@ import {
   FaSync,
   FaExclamationCircle,
   FaCheckCircle,
-  FaDollarSign,
   FaBoxes,
 } from "react-icons/fa";
 import { type Enquiry } from "../../types";
@@ -229,10 +228,9 @@ const SupplierEnquiries: React.FC = () => {
                       </span>
                       {e.target_unit_price && (
                         <span className="flex items-center gap-1 text-gray-600">
-                          <FaDollarSign className="text-gray-400" />
                           Target:{" "}
                           <span className="font-semibold">
-                            ${Number(e.target_unit_price).toFixed(2)}
+                            ₹{Number(e.target_unit_price).toFixed(2)}
                           </span>
                         </span>
                       )}
