@@ -16,7 +16,6 @@ import {
   FaExclamationCircle,
   FaUser,
   FaBoxes,
-  FaDollarSign,
 } from "react-icons/fa";
 import { type User } from "../../types";
 
@@ -346,9 +345,9 @@ const AdminEnquiries: React.FC = () => {
                       </span>
                       {e.target_unit_price && (
                         <span className="flex items-center gap-1 text-gray-600">
-                          <FaDollarSign /> Target:{" "}
+                          ₹ Target:{" "}
                           <span className="font-semibold">
-                            ${Number(e.target_unit_price).toFixed(2)}
+                            ₹{Number(e.target_unit_price).toFixed(2)}
                           </span>
                         </span>
                       )}
@@ -454,7 +453,7 @@ const AdminEnquiries: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Target Price
+                    Target Price(in ₹)
                   </label>
                   <input
                     type="number"

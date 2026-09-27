@@ -1,5 +1,5 @@
 // src/pages/admin/AddMedicine.tsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMedicine } from "../../contexts/MedicineContext";
 import {
@@ -69,6 +69,8 @@ const FORMS = [
   "other",
 ];
 
+type SectionId = "basic" | "details" | "medical";
+
 const AddMedicine: React.FC = () => {
   const navigate = useNavigate();
   const { createMedicine, isLoading } = useMedicine();
@@ -101,9 +103,11 @@ const AddMedicine: React.FC = () => {
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [activeSection, setActiveSection] = useState<
-    "basic" | "details" | "medical"
-  >("basic");
+  const [activeSection, setActiveSection] = useState<SectionId>("basic");
+
+  const [_visitedSections, setVisitedSections] = useState<Set<SectionId>>(
+    new Set(["basic"]),
+  );
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -145,21 +149,82 @@ const AddMedicine: React.FC = () => {
       images: p.images.filter((_, idx) => idx !== i),
     }));
 
+  // ---------- Per-section validation ----------
+  const basicValid =
+    formData.name.trim().length >= 2 && formData.category.trim().length > 0;
+
+  const detailsValid = useMemo(() => {
+    return (
+      formData.form.trim().length > 0 &&
+      formData.strength.trim().length > 0 &&
+      formData.pack_size.trim().length > 0 &&
+      formData.unit.trim().length > 0
+    );
+  }, [formData.form, formData.strength, formData.pack_size, formData.unit]);
+
+  const medicalValid = useMemo(() => {
+    return (
+      formData.usage.trim().length > 0 && formData.dosage.trim().length > 0
+    );
+  }, [formData.usage, formData.dosage]);
+
+  const sectionStatus: Record<SectionId, boolean> = {
+    basic: basicValid,
+    details: detailsValid,
+    medical: medicalValid,
+  };
+
+  // Only basic + details need to be valid to REACH the medical page.
+  // On the medical page, we show the submit button (disabled until medicalValid).
+  const canSubmit = basicValid && detailsValid && medicalValid;
+
+  const canNavigateTo = (target: SectionId): boolean => {
+    if (target === "basic") return true;
+    if (target === "details") return basicValid;
+    if (target === "medical") return basicValid && detailsValid;
+    return false;
+  };
+
+  const goToSection = (target: SectionId) => {
+    if (!canNavigateTo(target)) {
+      setMessage({
+        type: "error",
+        text:
+          target === "details"
+            ? "Please complete the Basic Info section first."
+            : "Please complete the Product Details section first.",
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    setMessage(null);
+    setActiveSection(target);
+    setVisitedSections((prev) => new Set(prev).add(target));
+  };
+
   const validate = (): string | null => {
     if (!formData.name || formData.name.trim().length < 2)
       return "Medicine name is required (min 2 characters)";
     if (!formData.category) return "Category is required";
+    if (!formData.form) return "Form is required in Product Details";
+    if (!formData.strength) return "Strength is required in Product Details";
+    if (!formData.pack_size) return "Pack size is required in Product Details";
+    if (!formData.usage) return "Usage is required in Medical Info";
+    if (!formData.dosage) return "Dosage is required in Medical Info";
     return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
+
     const err = validate();
     if (err) {
       setMessage({ type: "error", text: err });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+
     try {
       await createMedicine({
         name: formData.name.trim(),
@@ -211,6 +276,15 @@ const AddMedicine: React.FC = () => {
     { id: "medical", label: "Medical Info", icon: <FaInfoCircle /> },
   ] as const;
 
+  const completedCount = [basicValid, detailsValid, medicalValid].filter(
+    Boolean,
+  ).length;
+  const progressPercent = Math.round((completedCount / 3) * 100);
+
+  // Show submit button on the third (medical) page — always visible,
+  // but disabled until all validations pass.
+  const showSubmitButton = activeSection === "medical";
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-12">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -237,6 +311,24 @@ const AddMedicine: React.FC = () => {
           </div>
         </div>
 
+        {/* Progress bar */}
+        <div className="mb-6 bg-white rounded-2xl shadow-sm p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">
+              Setup Progress
+            </span>
+            <span className="text-sm font-semibold text-light-orange">
+              {completedCount}/3 sections completed
+            </span>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-light-orange to-pink transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
         {message && (
           <div
             className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${
@@ -260,20 +352,31 @@ const AddMedicine: React.FC = () => {
 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="flex overflow-x-auto border-b border-gray-100">
-            {sections.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setActiveSection(s.id)}
-                className={`flex items-center gap-2 px-6 py-4 font-medium whitespace-nowrap transition-colors ${
-                  activeSection === s.id
-                    ? "text-light-orange border-b-2 border-light-orange bg-light-orange/5"
-                    : "text-gray-600 hover:text-light-orange hover:bg-gray-50"
-                }`}
-              >
-                {s.icon}
-                {s.label}
-              </button>
-            ))}
+            {sections.map((s) => {
+              const done = sectionStatus[s.id];
+              const locked = !canNavigateTo(s.id);
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => goToSection(s.id)}
+                  disabled={locked}
+                  title={
+                    locked ? "Complete the previous section first" : undefined
+                  }
+                  className={`flex items-center gap-2 px-6 py-4 font-medium whitespace-nowrap transition-colors ${
+                    activeSection === s.id
+                      ? "text-light-orange border-b-2 border-light-orange bg-light-orange/5"
+                      : locked
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-600 hover:text-light-orange hover:bg-gray-50"
+                  }`}
+                >
+                  {done ? <FaCheck className="text-green-500" /> : s.icon}
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
 
           <form onSubmit={handleSubmit} className="p-8">
@@ -340,6 +443,17 @@ const AddMedicine: React.FC = () => {
                     ))}
                   </select>
                 </div>
+
+                <div className="md:col-span-2 flex justify-end pt-4">
+                  <button
+                    type="button"
+                    onClick={() => goToSection("details")}
+                    disabled={!basicValid}
+                    className="btn-primary disabled:opacity-50"
+                  >
+                    Next: Product Details
+                  </button>
+                </div>
               </div>
             )}
 
@@ -360,7 +474,7 @@ const AddMedicine: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Form
+                    Form <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="form"
@@ -378,7 +492,7 @@ const AddMedicine: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Strength
+                    Strength <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -391,7 +505,7 @@ const AddMedicine: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pack Size
+                    Pack Size <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -404,7 +518,7 @@ const AddMedicine: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Unit
+                    Unit <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="unit"
@@ -514,6 +628,24 @@ const AddMedicine: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                <div className="md:col-span-2 flex justify-between pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => goToSection("basic")}
+                    className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goToSection("medical")}
+                    disabled={!detailsValid}
+                    className="btn-primary disabled:opacity-50"
+                  >
+                    Next: Medical Info
+                  </button>
+                </div>
               </div>
             )}
 
@@ -521,7 +653,7 @@ const AddMedicine: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Usage
+                    Usage <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="usage"
@@ -534,7 +666,7 @@ const AddMedicine: React.FC = () => {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Dosage
+                    Dosage <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="dosage"
@@ -625,6 +757,16 @@ const AddMedicine: React.FC = () => {
                     </label>
                   ))}
                 </div>
+
+                <div className="md:col-span-2 flex justify-start pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => goToSection("details")}
+                    className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
+                  >
+                    Back
+                  </button>
+                </div>
               </div>
             )}
 
@@ -634,12 +776,15 @@ const AddMedicine: React.FC = () => {
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => setActiveSection(s.id)}
+                    onClick={() => goToSection(s.id)}
+                    disabled={!canNavigateTo(s.id)}
                     className={`w-2 h-2 rounded-full transition-all ${
                       activeSection === s.id
                         ? "bg-light-orange w-8"
-                        : "bg-gray-300"
-                    }`}
+                        : sectionStatus[s.id]
+                          ? "bg-green-400"
+                          : "bg-gray-300"
+                    } ${!canNavigateTo(s.id) ? "cursor-not-allowed opacity-50" : ""}`}
                   />
                 ))}
               </div>
@@ -651,13 +796,23 @@ const AddMedicine: React.FC = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-primary disabled:opacity-50 min-w-[150px]"
-                >
-                  {isLoading ? "Adding..." : "Add Medicine"}
-                </button>
+
+                {/* Submit button appears on Medical Info page — always visible,
+                    disabled until all sections are valid */}
+                {showSubmitButton && (
+                  <button
+                    type="submit"
+                    disabled={isLoading || !canSubmit}
+                    title={
+                      !canSubmit
+                        ? "Fill all required fields in every section to enable"
+                        : undefined
+                    }
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed min-w-[150px]"
+                  >
+                    {isLoading ? "Adding..." : "Add Medicine"}
+                  </button>
+                )}
               </div>
             </div>
           </form>
