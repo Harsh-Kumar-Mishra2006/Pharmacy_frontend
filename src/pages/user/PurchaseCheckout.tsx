@@ -1,4 +1,4 @@
-// src/pages/PurchaseCheckout.tsx
+// src/pages/user/PurchaseCheckout.tsx
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -27,6 +27,8 @@ interface CheckoutState {
   quantity: number;
 }
 
+const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
+
 const PurchaseCheckout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,11 +48,10 @@ const PurchaseCheckout: React.FC = () => {
 
   const { medicine, quantity } = state;
 
-  // after
   const unitPrice = Number(medicine.min_price ?? 0);
   const totalAmount = unitPrice * quantity;
 
-  // ---------- form ----------
+  // ---------- form state ----------
   const [formData, setFormData] = useState({
     customer_name: user?.name || "",
     customer_email: user?.email || "",
@@ -72,11 +73,12 @@ const PurchaseCheckout: React.FC = () => {
     reference: string;
   } | null>(null);
 
-  // const [screenshotUrl, setScreenshotUrl] = useState("");
+  // ---------- screenshot state ----------
+  // Store the actual File object — this is what gets sent to the backend via FormData.
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string>(""); // for UI only
+  // Local preview URL only — never sent to the server.
+  const [screenshotPreview, setScreenshotPreview] = useState<string>("");
   const [transactionId, setTransactionId] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -89,55 +91,52 @@ const PurchaseCheckout: React.FC = () => {
     }
   }, [message]);
 
+  // Revoke preview URL when it changes or component unmounts
+  useEffect(() => {
+    return () => {
+      if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
+    };
+  }, [screenshotPreview]);
+
   /**
-   * Converts the picked file to a base64 data URL and stores it in `screenshotUrl`.
-   * Max file size: 5MB (base64 grows ~33%, so this is ~6.6MB in the payload).
+   * Handle picking a screenshot file.
+   * Keeps the File object in state (for upload) and creates a local
+   * object URL purely for the on-screen preview. Nothing is base64-encoded
+   * or uploaded here — that happens when the form is submitted.
    */
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate type
     if (!file.type.startsWith("image/")) {
       setMessage({ type: "error", text: "Please select an image file" });
-      return;
-    }
-
-    // Validate size — max 5MB
-    const MAX_SIZE = 5 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-      setMessage({
-        type: "error",
-        text: "Image is too large. Maximum size is 5MB.",
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    setMessage(null);
-
-    try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("Failed to read image"));
-        reader.readAsDataURL(file);
-      });
-      setScreenshotUrl(dataUrl);
-    } catch (err: any) {
-      setMessage({
-        type: "error",
-        text: err.message || "Failed to process image",
-      });
-    } finally {
-      setIsUploading(false);
-      // Reset the input value so the same file can be picked again
       e.target.value = "";
+      return;
     }
+
+    if (file.size > MAX_SCREENSHOT_SIZE) {
+      setMessage({
+        type: "error",
+        text: "Image is too large. Maximum size is 5 MB.",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    // Revoke previous preview before replacing
+    if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
+
+    setScreenshotFile(file);
+    setScreenshotPreview(URL.createObjectURL(file));
+    setMessage(null);
+    // Reset the input so picking the same file again still fires onChange
+    e.target.value = "";
   };
 
   const clearScreenshot = () => {
-    setScreenshotUrl("");
+    if (screenshotPreview) URL.revokeObjectURL(screenshotPreview);
+    setScreenshotFile(null);
+    setScreenshotPreview("");
   };
 
   const handleChange = (
@@ -210,24 +209,32 @@ const PurchaseCheckout: React.FC = () => {
     }
   };
 
+  /**
+   * Submit the payment screenshot as multipart/form-data.
+   * Field name "screenshot" must match multer.single('screenshot') on the backend.
+   */
   const handleUploadScreenshot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createdPurchase) return;
     setMessage(null);
 
-    if (!screenshotUrl.trim()) {
+    if (!screenshotFile) {
       setMessage({
         type: "error",
-        text: "Please paste the payment screenshot URL",
+        text: "Please choose a payment screenshot first.",
       });
       return;
     }
 
     try {
-      await uploadScreenshot(createdPurchase.id, {
-        screenshot_url: screenshotUrl.trim(),
-        transaction_id: transactionId.trim() || undefined,
-      });
+      const fd = new FormData();
+      fd.append("screenshot", screenshotFile);
+      if (transactionId.trim()) {
+        fd.append("transaction_id", transactionId.trim());
+      }
+
+      await uploadScreenshot(createdPurchase.id, fd);
+
       setMessage({
         type: "success",
         text: "Payment proof submitted! Waiting for admin verification.",
@@ -515,8 +522,7 @@ const PurchaseCheckout: React.FC = () => {
                     Upload Payment Proof
                   </h3>
                   <p className="text-sm text-gray-500">
-                    After paying, paste the URL of your payment screenshot
-                    below.
+                    After paying, upload a screenshot of your payment below.
                   </p>
 
                   <div>
@@ -534,7 +540,7 @@ const PurchaseCheckout: React.FC = () => {
                     />
 
                     {/* Drop/click zone */}
-                    {!screenshotUrl ? (
+                    {!screenshotPreview ? (
                       <label
                         htmlFor="screenshot-file"
                         className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-light-orange hover:bg-light-orange/5 transition-colors"
@@ -544,13 +550,13 @@ const PurchaseCheckout: React.FC = () => {
                           Click to upload screenshot
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          PNG, JPG, JPEG up to 5MB
+                          PNG, JPG, JPEG up to 5 MB
                         </p>
                       </label>
                     ) : (
                       <div className="relative">
                         <img
-                          src={screenshotUrl}
+                          src={screenshotPreview}
                           alt="Payment screenshot"
                           className="w-full max-h-72 object-contain bg-gray-50 rounded-xl border border-gray-200"
                         />
@@ -570,31 +576,6 @@ const PurchaseCheckout: React.FC = () => {
                         </label>
                       </div>
                     )}
-
-                    {isUploading && (
-                      <p className="text-xs text-gray-500 mt-2 flex items-center gap-2">
-                        <svg
-                          className="animate-spin h-3 w-3"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                          />
-                        </svg>
-                        Processing image...
-                      </p>
-                    )}
                   </div>
 
                   <div>
@@ -610,24 +591,10 @@ const PurchaseCheckout: React.FC = () => {
                     />
                   </div>
 
-                  {screenshotUrl && (
-                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <p className="text-xs text-gray-500 mb-2">Preview:</p>
-                      <img
-                        src={screenshotUrl}
-                        alt="Payment screenshot"
-                        className="max-h-64 mx-auto rounded-lg"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
-
                   <button
                     type="submit"
-                    disabled={isLoading}
-                    className="w-full btn-primary disabled:opacity-50"
+                    disabled={isLoading || !screenshotFile}
+                    className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="flex items-center justify-center gap-2">
                       <FaUpload />
@@ -671,7 +638,7 @@ const PurchaseCheckout: React.FC = () => {
                     </p>
                     <p className="text-xs text-gray-500">{medicine.category}</p>
                     <p className="text-sm font-medium text-light-orange mt-1">
-                      ${unitPrice.toFixed(2)} each
+                      ₹{unitPrice.toFixed(2)} each
                     </p>
                   </div>
                 </div>
@@ -681,9 +648,6 @@ const PurchaseCheckout: React.FC = () => {
                     <span className="text-gray-600">Quantity</span>
                     <span className="font-medium">{quantity}</span>
                   </div>
-                  <span className="text-2xl font-bold text-light-orange">
-                    ${totalAmount.toFixed(2)}
-                  </span>
                   <div className="flex justify-between text-gray-600">
                     <span>Delivery</span>
                     <span className="text-green-600">Free</span>

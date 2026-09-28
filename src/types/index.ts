@@ -674,7 +674,7 @@ export interface PurchaseContextType {
   createPurchase: (data: PurchaseRequest) => Promise<PurchaseCreateResponse>;
   uploadScreenshot: (
     purchaseId: string,
-    data: UploadScreenshotRequest
+    data: UploadScreenshotRequest | FormData,
   ) => Promise<Purchase>;
   verifyPayment: (
     purchaseId: string,
@@ -748,3 +748,4 @@ export interface AvailableMedicineFilters {
   page?: number;
   limit?: number;
 }
+

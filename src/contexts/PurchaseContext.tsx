@@ -75,7 +75,7 @@ export const PurchaseProvider: React.FC<PurchaseProviderProps> = ({
 
   const uploadScreenshot = async (
     purchaseId: string,
-    data: UploadScreenshotRequest,
+    data: UploadScreenshotRequest | FormData,
   ): Promise<Purchase> => {
     setIsLoading(true);
     setError(null);

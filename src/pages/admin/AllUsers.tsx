@@ -110,21 +110,21 @@ const AllUsers: React.FC = () => {
   };
 
   // ---------- Update user role ----------
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
-    setActionLoading(userId);
-    try {
-      const response = await AuthService.updateUserRole(userId, newRole);
-      if (response.success) {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
-        );
-      }
-    } catch (err: any) {
-      alert(err.message || "Failed to update role");
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  // const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  //   setActionLoading(userId);
+  //   try {
+  //     const response = await AuthService.updateUserRole(userId, newRole);
+  //     if (response.success) {
+  //       setUsers((prev) =>
+  //         prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
+  //       );
+  //     }
+  //   } catch (err: any) {
+  //     alert(err.message || "Failed to update role");
+  //   } finally {
+  //     setActionLoading(null);
+  //   }
+  // };
 
   // ---------- Role badge ----------
   const getRoleBadge = (role: UserRole) => {
@@ -340,29 +340,7 @@ const AllUsers: React.FC = () => {
                           )}
                         </td>
 
-                        {/* Role */}
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-2">
-                            {getRoleBadge(u.role)}
-                            {u.id !== currentUser?.id && (
-                              <select
-                                value={u.role}
-                                onChange={(e) =>
-                                  handleRoleChange(
-                                    u.id,
-                                    e.target.value as UserRole,
-                                  )
-                                }
-                                disabled={actionLoading === u.id}
-                                className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
-                              >
-                                <option value="user">user</option>
-                                <option value="supplier">supplier</option>
-                                <option value="admin">admin</option>
-                              </select>
-                            )}
-                          </div>
-                        </td>
+                        <td className="px-6 py-4">{getRoleBadge(u.role)}</td>
 
                         {/* Status */}
                         <td className="px-6 py-4">

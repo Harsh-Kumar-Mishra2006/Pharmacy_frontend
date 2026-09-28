@@ -46,19 +46,14 @@ class PurchaseService {
    * Access: Public
    */
   public async uploadScreenshot(
-    purchaseId: string,
-    data: UploadScreenshotRequest
-  ): Promise<ApiResponse<Purchase>> {
-    try {
-      return await Api.post<Purchase>(
-        `/purchases/${purchaseId}/upload-screenshot`,
-        data
-      );
-    } catch (error: any) {
-      console.error('Upload screenshot error:', error);
-      throw error;
-    }
-  }
+  purchaseId: string,
+  data: UploadScreenshotRequest | FormData
+): Promise<ApiResponse<Purchase>> {
+  return await Api.post<Purchase>(
+    `/purchases/${purchaseId}/upload-screenshot`,
+    data
+  );
+}
 
   /**
    * Get a single purchase by ID.
