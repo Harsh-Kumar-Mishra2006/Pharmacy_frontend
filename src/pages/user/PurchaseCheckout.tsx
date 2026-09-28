@@ -72,7 +72,9 @@ const PurchaseCheckout: React.FC = () => {
     reference: string;
   } | null>(null);
 
-  const [screenshotUrl, setScreenshotUrl] = useState("");
+  // const [screenshotUrl, setScreenshotUrl] = useState("");
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string>(""); // for UI only
   const [transactionId, setTransactionId] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<{
