@@ -7,39 +7,20 @@ import {
   FaSync,
   FaEye,
   FaTimes,
-  FaClock,
   FaCheckCircle,
-  FaTimesCircle,
-  FaTruck,
-  FaBoxOpen,
   FaExclamationCircle,
-  FaBan,
   FaClipboardList,
 } from "react-icons/fa";
 import { type Purchase } from "../../types";
 
-type StatusFilter =
-  | "all"
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
-
 const MyPurchases: React.FC = () => {
-  const { purchases, isLoading, error, getMyPurchases, cancelPurchase } =
-    usePurchase();
+  const { purchases, isLoading, error, getMyPurchases } = usePurchase();
 
-  const [filter, setFilter] = useState<StatusFilter>("all");
   const [selected, setSelected] = useState<Purchase | null>(null);
-  const [cancelTarget, setCancelTarget] = useState<Purchase | null>(null);
-  const [cancelReason, setCancelReason] = useState("");
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     getMyPurchases();
@@ -57,75 +38,6 @@ const MyPurchases: React.FC = () => {
     }
   }, [message]);
 
-  // ── DEBUG: uncomment to see what the API actually returned ──
-  // console.log("📦 purchases from context:", purchases);
-
-  const filtered =
-    filter === "all" ? purchases : purchases.filter((p) => p.status === filter);
-
-  const handleCancel = async () => {
-    if (!cancelTarget) return;
-    setIsProcessing(true);
-    try {
-      await cancelPurchase(cancelTarget.id, cancelReason.trim() || undefined);
-      setMessage({ type: "success", text: "Purchase cancelled successfully" });
-      setCancelTarget(null);
-      setCancelReason("");
-      await getMyPurchases();
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Failed to cancel" });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const base =
-      "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold";
-    switch (status) {
-      case "pending":
-        return (
-          <span className={`${base} bg-yellow-100 text-yellow-700`}>
-            <FaClock className="text-xs" /> Pending
-          </span>
-        );
-      case "confirmed":
-        return (
-          <span className={`${base} bg-blue-100 text-blue-700`}>
-            <FaCheckCircle className="text-xs" /> Confirmed
-          </span>
-        );
-      case "processing":
-        return (
-          <span className={`${base} bg-purple-100 text-purple-700`}>
-            <FaBoxOpen className="text-xs" /> Processing
-          </span>
-        );
-      case "shipped":
-        return (
-          <span className={`${base} bg-indigo-100 text-indigo-700`}>
-            <FaTruck className="text-xs" /> Shipped
-          </span>
-        );
-      case "delivered":
-        return (
-          <span className={`${base} bg-green-100 text-green-700`}>
-            <FaCheckCircle className="text-xs" /> Delivered
-          </span>
-        );
-      case "cancelled":
-        return (
-          <span className={`${base} bg-red-100 text-red-700`}>
-            <FaTimesCircle className="text-xs" /> Cancelled
-          </span>
-        );
-      default:
-        return (
-          <span className={`${base} bg-gray-100 text-gray-700`}>{status}</span>
-        );
-    }
-  };
-
   const formatDate = (d?: string) => {
     if (!d) return "N/A";
     const dt = new Date(d);
@@ -137,8 +49,12 @@ const MyPurchases: React.FC = () => {
     });
   };
 
-  const canCancel = (p: Purchase) =>
-    p.status === "pending" || p.status === "confirmed";
+  // Always-success badge — replaces all status badges
+  const SuccessBadge = () => (
+    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+      <FaCheckCircle className="text-xs" /> Success
+    </span>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-12">
@@ -195,33 +111,6 @@ const MyPurchases: React.FC = () => {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {(
-            [
-              "all",
-              "pending",
-              "confirmed",
-              "processing",
-              "shipped",
-              "delivered",
-              "cancelled",
-            ] as const
-          ).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
-                filter === f
-                  ? "bg-light-orange text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
         {/* Loading */}
         {isLoading && purchases.length === 0 && (
           <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100">
@@ -231,33 +120,27 @@ const MyPurchases: React.FC = () => {
         )}
 
         {/* Empty */}
-        {!isLoading && filtered.length === 0 && (
+        {!isLoading && purchases.length === 0 && (
           <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100">
             <div className="w-20 h-20 bg-gradient-to-br from-light-orange/20 to-pink/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <FaClipboardList className="text-3xl text-light-orange" />
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">
-              {purchases.length === 0
-                ? "No orders yet"
-                : "No orders match this filter"}
+              No orders yet
             </h3>
             <p className="text-gray-500 mb-6">
-              {purchases.length === 0
-                ? "Browse medicines and place your first order."
-                : "Try a different filter."}
+              Browse medicines and place your first order.
             </p>
-            {purchases.length === 0 && (
-              <Link to="/medicines" className="btn-primary inline-block">
-                Browse Medicines
-              </Link>
-            )}
+            <Link to="/medicines" className="btn-primary inline-block">
+              Browse Medicines
+            </Link>
           </div>
         )}
 
         {/* Orders List */}
-        {!isLoading && filtered.length > 0 && (
+        {!isLoading && purchases.length > 0 && (
           <div className="space-y-4">
-            {filtered.map((p) => (
+            {purchases.map((p) => (
               <div
                 key={p.id}
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow"
@@ -277,7 +160,7 @@ const MyPurchases: React.FC = () => {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      {getStatusBadge(p.status)}
+                      <SuccessBadge />
                     </div>
                     <h3 className="font-bold text-gray-800 text-lg">
                       {p.medicine_name}
@@ -286,7 +169,7 @@ const MyPurchases: React.FC = () => {
                       #{p.purchase_number}
                     </p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3 text-sm">
                       <div>
                         <p className="text-xs text-gray-500">Quantity</p>
                         <p className="font-semibold">{p.quantity}</p>
@@ -303,12 +186,6 @@ const MyPurchases: React.FC = () => {
                           {formatDate(p.purchased_at)}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Status</p>
-                        <p className="font-semibold text-xs capitalize">
-                          {p.status}
-                        </p>
-                      </div>
                     </div>
                   </div>
 
@@ -319,17 +196,6 @@ const MyPurchases: React.FC = () => {
                     >
                       <FaEye className="text-xs" /> View
                     </button>
-                    {canCancel(p) && (
-                      <button
-                        onClick={() => {
-                          setCancelTarget(p);
-                          setCancelReason("");
-                        }}
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-sm font-medium"
-                      >
-                        <FaBan className="text-xs" /> Cancel
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -338,7 +204,7 @@ const MyPurchases: React.FC = () => {
         )}
       </div>
 
-      {/* Details modal — purchase info only, no payment section */}
+      {/* Details modal — no status, no cancel */}
       {selected && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -366,7 +232,7 @@ const MyPurchases: React.FC = () => {
                     {selected.purchase_number}
                   </p>
                 </div>
-                {getStatusBadge(selected.status)}
+                <SuccessBadge />
               </div>
 
               <div className="p-4 bg-gray-50 rounded-xl space-y-3">
@@ -445,17 +311,6 @@ const MyPurchases: React.FC = () => {
                   <p className="text-sm text-gray-700">{selected.notes}</p>
                 </div>
               )}
-
-              {selected.cancellation_reason && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-xs font-semibold text-red-700 mb-1">
-                    Cancellation Reason
-                  </p>
-                  <p className="text-sm text-red-700">
-                    {selected.cancellation_reason}
-                  </p>
-                </div>
-              )}
             </div>
 
             <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 flex gap-3">
@@ -464,73 +319,6 @@ const MyPurchases: React.FC = () => {
                 className="flex-1 px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
               >
                 Close
-              </button>
-              {canCancel(selected) && (
-                <button
-                  onClick={() => {
-                    setCancelTarget(selected);
-                    setSelected(null);
-                    setCancelReason("");
-                  }}
-                  className="flex-1 px-6 py-3 rounded-lg bg-red-500 text-white hover:bg-red-600 font-medium"
-                >
-                  Cancel Order
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cancel modal */}
-      {cancelTarget && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setCancelTarget(null)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaBan className="text-red-600 text-xl" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-800 text-center mb-2">
-              Cancel Order?
-            </h2>
-            <p className="text-gray-600 text-center mb-4">
-              This will cancel order{" "}
-              <span className="font-mono font-semibold">
-                {cancelTarget.purchase_number}
-              </span>
-              .
-            </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason (Optional)
-              </label>
-              <textarea
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="Why are you cancelling?"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setCancelTarget(null)}
-                disabled={isProcessing}
-                className="flex-1 px-4 py-3 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
-              >
-                Keep Order
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={isProcessing}
-                className="flex-1 px-4 py-3 rounded-lg bg-red-500 text-white hover:bg-red-600 font-medium disabled:opacity-50"
-              >
-                {isProcessing ? "Cancelling..." : "Cancel Order"}
               </button>
             </div>
           </div>
