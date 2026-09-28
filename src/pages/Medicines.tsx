@@ -522,7 +522,7 @@ const Medicines: React.FC = () => {
                 {purchaseModal.name}
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                Price: ${(purchaseModal.min_price ?? 0).toFixed(2)} each
+                Price: ₹ {(purchaseModal.min_price ?? 0).toFixed(2)} each
               </p>
             </div>
 
