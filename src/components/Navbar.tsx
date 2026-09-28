@@ -65,11 +65,11 @@ const Navbar: React.FC = () => {
     switch (user.role) {
       case "admin":
         return [
-          {
-            path: "/medicines",
-            label: "Medicines",
-            icon: <FaCapsules />,
-          },
+          // {
+          //   path: "/medicines",
+          //   label: "Medicines",
+          //   icon: <FaCapsules />,
+          // },
           {
             path: "/admin/medicines/add",
             label: "Add Medicines",
@@ -88,6 +88,11 @@ const Navbar: React.FC = () => {
           {
             path: "/admin/enquiries",
             label: "Enquiries",
+            icon: <FaExclamationCircle />,
+          },
+          {
+            path: "/admin/payment-verification",
+            label: "Payments",
             icon: <FaExclamationCircle />,
           },
           { path: "/admin/users", label: "Users", icon: <FaUser /> },

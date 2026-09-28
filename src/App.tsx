@@ -169,6 +169,14 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/admin/payment-verification"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminPaymentVerification />
+                          </ProtectedRoute>
+                        }
+                      />
                     </Routes>
                   </main>
                   <Footer />
@@ -176,7 +184,7 @@ function App() {
                     position="top-right"
                     autoClose={3000}
                     hideProgressBar={false}
-                    newestOnTops
+                    newestOnTop
                     closeOnClick
                     rtl={false}
                     pauseOnFocusLoss

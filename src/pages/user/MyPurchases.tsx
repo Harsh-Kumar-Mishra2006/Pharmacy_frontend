@@ -1,4 +1,4 @@
-// src/pages/MyPurchases.tsx
+// src/pages/user/MyPurchases.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePurchase } from "../../contexts/PurchaseContext";
@@ -56,6 +56,9 @@ const MyPurchases: React.FC = () => {
       return () => clearTimeout(t);
     }
   }, [message]);
+
+  // ── DEBUG: uncomment to see what the API actually returned ──
+  // console.log("📦 purchases from context:", purchases);
 
   const filtered =
     filter === "all" ? purchases : purchases.filter((p) => p.status === filter);
@@ -123,43 +126,6 @@ const MyPurchases: React.FC = () => {
     }
   };
 
-  const getPaymentBadge = (paymentStatus: string) => {
-    const base =
-      "inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium";
-    switch (paymentStatus) {
-      case "pending":
-        return (
-          <span className={`${base} bg-yellow-100 text-yellow-700`}>
-            Payment Pending
-          </span>
-        );
-      case "paid":
-        return (
-          <span className={`${base} bg-blue-100 text-blue-700`}>Verifying</span>
-        );
-      case "verified":
-        return (
-          <span className={`${base} bg-green-100 text-green-700`}>
-            <FaCheckCircle className="text-xs" /> Paid
-          </span>
-        );
-      case "failed":
-        return (
-          <span className={`${base} bg-red-100 text-red-700`}>Failed</span>
-        );
-      case "refunded":
-        return (
-          <span className={`${base} bg-gray-100 text-gray-700`}>Refunded</span>
-        );
-      default:
-        return (
-          <span className={`${base} bg-gray-100 text-gray-700`}>
-            {paymentStatus}
-          </span>
-        );
-    }
-  };
-
   const formatDate = (d?: string) => {
     if (!d) return "N/A";
     const dt = new Date(d);
@@ -213,7 +179,9 @@ const MyPurchases: React.FC = () => {
                 <FaExclamationCircle className="text-red-500 mt-0.5" />
               )}
               <p
-                className={`text-sm ${message.type === "success" ? "text-green-700" : "text-red-700"}`}
+                className={`text-sm ${
+                  message.type === "success" ? "text-green-700" : "text-red-700"
+                }`}
               >
                 {message.text}
               </p>
@@ -253,6 +221,14 @@ const MyPurchases: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* Loading */}
+        {isLoading && purchases.length === 0 && (
+          <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-light-orange mx-auto"></div>
+            <p className="text-gray-500 mt-4">Loading your orders…</p>
+          </div>
+        )}
 
         {/* Empty */}
         {!isLoading && filtered.length === 0 && (
@@ -302,7 +278,6 @@ const MyPurchases: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       {getStatusBadge(p.status)}
-                      {getPaymentBadge(p.payment_status)}
                     </div>
                     <h3 className="font-bold text-gray-800 text-lg">
                       {p.medicine_name}
@@ -329,9 +304,9 @@ const MyPurchases: React.FC = () => {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500">Payment</p>
+                        <p className="text-xs text-gray-500">Status</p>
                         <p className="font-semibold text-xs capitalize">
-                          {p.payment_status}
+                          {p.status}
                         </p>
                       </div>
                     </div>
@@ -363,7 +338,7 @@ const MyPurchases: React.FC = () => {
         )}
       </div>
 
-      {/* Details modal */}
+      {/* Details modal — purchase info only, no payment section */}
       {selected && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -427,30 +402,42 @@ const MyPurchases: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-2">Payment</h4>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm text-gray-600">Status</span>
-                  {getPaymentBadge(selected.payment_status)}
-                </div>
-                {selected.transaction_id && (
-                  <p className="text-xs text-gray-500 mt-2 font-mono">
-                    Txn: {selected.transaction_id}
-                  </p>
-                )}
-                {selected.payment?.screenshot_url && (
-                  <div className="mt-3">
-                    <p className="text-xs text-gray-500 mb-1">
-                      Payment Screenshot
-                    </p>
-                    <img
-                      src={selected.payment.screenshot_url}
-                      alt="Payment"
-                      className="max-h-40 rounded-lg border border-gray-200"
+              {selected.disease && (
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">
+                    Medical Info
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <Detail label="Disease" value={selected.disease} />
+                    <Detail
+                      label="Symptoms"
+                      value={selected.symptoms || "N/A"}
                     />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {selected.prescription_notes && (
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-1">
+                    Prescription Notes
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {selected.prescription_notes}
+                  </p>
+                </div>
+              )}
+
+              {selected.delivery_instructions && (
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-1">
+                    Delivery Instructions
+                  </h4>
+                  <p className="text-sm text-gray-700">
+                    {selected.delivery_instructions}
+                  </p>
+                </div>
+              )}
 
               {selected.notes && (
                 <div>

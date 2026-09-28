@@ -1,5 +1,9 @@
 // src/api/Api.ts
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+} from 'axios';
 import { type ApiResponse } from '../types';
 
 class Api {
@@ -7,9 +11,15 @@ class Api {
 
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'https://pharmacy-backend-up5t.onrender.com/api',
+      baseURL:
+        import.meta.env.VITE_API_URL ||
+        'https://pharmacy-backend-up5t.onrender.com/api',
       timeout: 30000,
-      headers: { 'Content-Type': 'application/json' },
+      // ⚠️ DO NOT set a global Content-Type here.
+      // Axios detects the correct one per request:
+      //   - plain object / array → application/json
+      //   - FormData            → multipart/form-data with boundary
+      //   - URLSearchParams     → application/x-www-form-urlencoded
     });
 
     this.api.interceptors.request.use(
@@ -18,9 +28,18 @@ class Api {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Belt-and-suspenders: if the body is FormData, remove any
+        // Content-Type that may have been inherited from defaults.
+        // The browser will set multipart/form-data + boundary itself.
+        if (config.data instanceof FormData) {
+          delete config.headers['Content-Type'];
+          delete config.headers['content-type'];
+        }
+
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     this.api.interceptors.response.use(
@@ -37,49 +56,85 @@ class Api {
           }
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
-  public async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  public async get<T = any>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response: AxiosResponse<ApiResponse<T>> = await this.api.get(url, config);
+      const response: AxiosResponse<ApiResponse<T>> = await this.api.get(
+        url,
+        config,
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  public async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  public async post<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response: AxiosResponse<ApiResponse<T>> = await this.api.post(url, data, config);
+      const response: AxiosResponse<ApiResponse<T>> = await this.api.post(
+        url,
+        data,
+        config,
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  public async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  public async put<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response: AxiosResponse<ApiResponse<T>> = await this.api.put(url, data, config);
+      const response: AxiosResponse<ApiResponse<T>> = await this.api.put(
+        url,
+        data,
+        config,
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  public async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  public async delete<T = any>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(url, config);
+      const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(
+        url,
+        config,
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  public async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  public async patch<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
     try {
-      const response: AxiosResponse<ApiResponse<T>> = await this.api.patch(url, data, config);
+      const response: AxiosResponse<ApiResponse<T>> = await this.api.patch(
+        url,
+        data,
+        config,
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -94,7 +149,9 @@ class Api {
       (errorObj as any).data = error.response.data;
       return errorObj;
     } else if (error.request) {
-      return new Error('No response from server. Please check your connection.');
+      return new Error(
+        'No response from server. Please check your connection.',
+      );
     }
     return new Error(error.message || 'An unexpected error occurred');
   }
