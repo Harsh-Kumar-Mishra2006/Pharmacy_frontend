@@ -36,6 +36,7 @@ import AdminMedicines from "./pages/admin/AdminMedicines";
 import AddMedicine from "./pages/admin/AddMedicine";
 import AdminSupplyApprovals from "./pages/admin/AdminSupplyApprovals";
 import AdminEnquiries from "./pages/admin/AdminEnquiries";
+import AllUsers from "./pages/admin/AllUsers";
 
 function App() {
   return (
@@ -160,6 +161,14 @@ function App() {
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/admin/users"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <AllUsers />
+                          </ProtectedRoute>
+                        }
+                      />
                     </Routes>
                   </main>
                   <Footer />
@@ -167,7 +176,7 @@ function App() {
                     position="top-right"
                     autoClose={3000}
                     hideProgressBar={false}
-                    newestOnTop
+                    newestOnTops
                     closeOnClick
                     rtl={false}
                     pauseOnFocusLoss

@@ -5,7 +5,6 @@ import { useMedicine } from "../../contexts/MedicineContext";
 import {
   FaPills,
   FaTag,
-  FaImage,
   FaInfoCircle,
   FaExclamationCircle,
   FaCheck,
@@ -98,7 +97,7 @@ const AddMedicine: React.FC = () => {
   });
 
   const [compositionInput, setCompositionInput] = useState("");
-  const [imageInput, setImageInput] = useState("");
+  // const [imageInput, setImageInput] = useState("");
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -109,6 +108,20 @@ const AddMedicine: React.FC = () => {
     new Set(["basic"]),
   );
 
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+
+  const handleImageFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const valid = files.filter((f) => f.size <= 10 * 1024 * 1024);
+    if (valid.length !== files.length) {
+      setMessage({ type: "error", text: "Each image must be under 10 MB." });
+    }
+    setImageFiles((prev) => [...prev, ...valid].slice(0, 5));
+  };
+
+  const removeImageFile = (i: number) => {
+    setImageFiles((prev) => prev.filter((_, idx) => idx !== i));
+  };
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -137,17 +150,17 @@ const AddMedicine: React.FC = () => {
       composition: p.composition.filter((_, idx) => idx !== i),
     }));
 
-  const addImage = () => {
-    if (imageInput.trim()) {
-      setFormData((p) => ({ ...p, images: [...p.images, imageInput.trim()] }));
-      setImageInput("");
-    }
-  };
-  const removeImage = (i: number) =>
-    setFormData((p) => ({
-      ...p,
-      images: p.images.filter((_, idx) => idx !== i),
-    }));
+  // const addImage = () => {
+  //   if (imageInput.trim()) {
+  //     setFormData((p) => ({ ...p, images: [...p.images, imageInput.trim()] }));
+  //     setImageInput("");
+  //   }
+  // };
+  // const removeImage = (i: number) =>
+  //   setFormData((p) => ({
+  //     ...p,
+  //     images: p.images.filter((_, idx) => idx !== i),
+  //   }));
 
   // ---------- Per-section validation ----------
   const basicValid =
@@ -221,52 +234,63 @@ const AddMedicine: React.FC = () => {
     const err = validate();
     if (err) {
       setMessage({ type: "error", text: err });
-      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
     try {
-      await createMedicine({
-        name: formData.name.trim(),
-        generic_name: formData.generic_name.trim() || undefined,
-        brand_name: formData.brand_name.trim() || undefined,
-        category: formData.category,
-        images: formData.images,
-        other_details: {
+      const fd = new FormData();
+      fd.append("name", formData.name.trim());
+      if (formData.generic_name)
+        fd.append("generic_name", formData.generic_name.trim());
+      if (formData.brand_name)
+        fd.append("brand_name", formData.brand_name.trim());
+      fd.append("category", formData.category);
+
+      fd.append(
+        "medical_details",
+        JSON.stringify({
+          usage: formData.usage || undefined,
+          dosage: formData.dosage || undefined,
+          storage: formData.storage || undefined,
+          manufacturer: formData.manufacturer || undefined,
+          country_of_origin: formData.country_of_origin || undefined,
+        }),
+      );
+
+      fd.append(
+        "other_details",
+        JSON.stringify({
           description: formData.description || undefined,
           form: formData.form || undefined,
           strength: formData.strength || undefined,
           pack_size: formData.pack_size || undefined,
           unit: formData.unit || undefined,
           composition: formData.composition,
-        },
-        medical_details: {
-          usage: formData.usage || undefined,
-          dosage: formData.dosage || undefined,
-          storage: formData.storage || undefined,
-          manufacturer: formData.manufacturer || undefined,
-          country_of_origin: formData.country_of_origin || undefined,
-        },
-        metadata: {
+        }),
+      );
+
+      fd.append(
+        "metadata",
+        JSON.stringify({
           is_prescription_required: formData.is_prescription_required,
           is_controlled_substance: false,
           cold_chain_required: formData.cold_chain_required,
           hazardous: formData.hazardous,
           requires_medical_approval: false,
           reviews_count: 0,
-        },
-      });
-      setMessage({
-        type: "success",
-        text: "Medicine added to catalog successfully!",
-      });
+        }),
+      );
+
+      imageFiles.forEach((f) => fd.append("images", f));
+
+      await createMedicine(fd as any); // see service update below
+      setMessage({ type: "success", text: "Medicine added successfully!" });
       setTimeout(() => navigate("/admin/medicines"), 1200);
     } catch (err: any) {
       setMessage({
         type: "error",
         text: err.message || "Failed to add medicine",
       });
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -579,46 +603,27 @@ const AddMedicine: React.FC = () => {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image URLs
+                    Medicine Images (max 5, 10 MB each)
                   </label>
-                  <div className="flex gap-2 mb-3">
-                    <div className="relative flex-1">
-                      <FaImage className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="url"
-                        value={imageInput}
-                        onChange={(e) => setImageInput(e.target.value)}
-                        onKeyPress={(e) =>
-                          e.key === "Enter" && (e.preventDefault(), addImage())
-                        }
-                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-light-orange"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={addImage}
-                      className="px-6 py-3 bg-light-orange text-white rounded-lg hover:bg-pink"
-                    >
-                      <FaPlus />
-                    </button>
-                  </div>
-                  {formData.images.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {formData.images.map((url, i) => (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageFiles}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-light-orange"
+                  />
+                  {imageFiles.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                      {imageFiles.map((file, i) => (
                         <div key={i} className="relative group">
                           <img
-                            src={url}
+                            src={URL.createObjectURL(file)}
                             alt=""
                             className="w-full h-24 object-cover rounded-lg border"
-                            onError={(e) =>
-                              ((e.target as HTMLImageElement).src =
-                                "https://via.placeholder.com/150?text=Invalid")
-                            }
                           />
                           <button
                             type="button"
-                            onClick={() => removeImage(i)}
+                            onClick={() => removeImageFile(i)}
                             className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100"
                           >
                             <FaTrash className="text-xs" />

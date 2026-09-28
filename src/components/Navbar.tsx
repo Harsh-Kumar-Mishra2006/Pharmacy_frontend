@@ -127,11 +127,6 @@ const Navbar: React.FC = () => {
             label: "My Purchases",
             icon: <FaCapsules />,
           },
-          {
-            path: "/purchase/checkout",
-            label: "CheckOut",
-            icon: <FaCapsules />,
-          },
         ];
       default:
         return [
