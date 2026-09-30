@@ -13,7 +13,6 @@ import {
   FaEyeSlash,
   FaExclamationCircle,
   FaUserShield,
-  FaTruck,
 } from "react-icons/fa";
 
 const Register: React.FC = () => {
@@ -97,12 +96,12 @@ const Register: React.FC = () => {
       icon: <FaUser />,
       desc: "Buy medicines",
     },
-    {
-      value: "supplier",
-      label: "Supplier",
-      icon: <FaTruck />,
-      desc: "Sell medicines",
-    },
+    // {
+    //   value: "supplier",
+    //   label: "Supplier",
+    //   icon: <FaTruck />,
+    //   desc: "Sell medicines",
+    // },
     {
       value: "admin",
       label: "Admin",
@@ -132,7 +131,7 @@ const Register: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Account Type *
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {roleOptions.map((option) => (
                 <button
                   key={option.value}
