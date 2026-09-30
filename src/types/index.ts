@@ -650,6 +650,7 @@ export interface AuthContextType {
 
   clearError: () => void;
 }
+
 export interface MedicineContextType {
   medicines: Medicine[];
   selectedMedicine: Medicine | null;

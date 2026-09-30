@@ -77,10 +77,15 @@ const Navbar: React.FC = () => {
             icon: <FaPlus />,
           },
           {
-            path: "/admin/medicines",
-            label: "My Medicines",
-            icon: <FaCapsules />,
+            path: "/add-supplier",
+            label: "Add Suppliers",
+            icon: <FaPlus />,
           },
+          // {
+          //   path: "/admin/medicines",
+          //   label: "My Medicines",
+          //   icon: <FaCapsules />,
+          // },
           {
             path: "/admin/supplies",
             label: "Supply Approvals",

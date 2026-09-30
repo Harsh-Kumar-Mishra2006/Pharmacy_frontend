@@ -14,6 +14,7 @@ import {
   FaFlask,
 } from "react-icons/fa";
 import { type MedicineForm } from "../../types";
+import AdminMedicines from "./AdminMedicines";
 
 interface FormData {
   name: string;
@@ -823,6 +824,7 @@ const AddMedicine: React.FC = () => {
           </form>
         </div>
       </div>
+      <AdminMedicines />
     </div>
   );
 };

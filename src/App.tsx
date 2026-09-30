@@ -37,6 +37,7 @@ import AddMedicine from "./pages/admin/AddMedicine";
 import AdminSupplyApprovals from "./pages/admin/AdminSupplyApprovals";
 import AdminEnquiries from "./pages/admin/AdminEnquiries";
 import AllUsers from "./pages/admin/AllUsers";
+import AddSupplier from "./pages/admin/AddSupplier";
 
 function App() {
   return (
@@ -92,6 +93,8 @@ function App() {
                         }
                       />
                       <Route path="/medicines" element={<Medicines />} />
+                      <Route path="/add-supplier" element={<AddSupplier />} />
+
                       <Route path="*" element={<Navigate to="/" replace />} />
 
                       {/* SUPPLIER */}
