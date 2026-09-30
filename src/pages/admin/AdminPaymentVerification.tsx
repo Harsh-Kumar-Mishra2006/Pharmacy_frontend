@@ -9,12 +9,12 @@ import {
   FaTimes,
   FaClock,
   FaExclamationCircle,
-  FaDollarSign,
   FaImage,
   FaClipboardList,
   FaUser,
   FaCheck,
 } from "react-icons/fa";
+import { IndianRupee } from "lucide-react";
 import { type Purchase } from "../../types";
 
 const AdminPaymentVerification: React.FC = () => {
@@ -115,7 +115,7 @@ const AdminPaymentVerification: React.FC = () => {
     {
       label: "Total Revenue",
       value: `₹${Number(statistics?.total_revenue || 0).toFixed(2)}`,
-      icon: <FaDollarSign />,
+      icon: <IndianRupee />,
       color: "from-purple-500 to-purple-600",
     },
   ];

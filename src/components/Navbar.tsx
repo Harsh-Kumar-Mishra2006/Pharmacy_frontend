@@ -9,11 +9,12 @@ import {
   FaPlus,
   FaTimes,
   FaPills,
-  FaTachometerAlt,
   FaCapsules,
   FaShoppingCart,
   FaExclamationCircle,
 } from "react-icons/fa";
+
+import { IndianRupee, Truck } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -73,7 +74,7 @@ const Navbar: React.FC = () => {
           {
             path: "/admin/medicines/add",
             label: "Add Medicines",
-            icon: <FaCapsules />,
+            icon: <FaPlus />,
           },
           {
             path: "/admin/medicines",
@@ -83,7 +84,7 @@ const Navbar: React.FC = () => {
           {
             path: "/admin/supplies",
             label: "Supply Approvals",
-            icon: <FaExclamationCircle />,
+            icon: <FaBars />,
           },
           {
             path: "/admin/enquiries",
@@ -93,7 +94,7 @@ const Navbar: React.FC = () => {
           {
             path: "/admin/payment-verification",
             label: "Payments",
-            icon: <FaExclamationCircle />,
+            icon: <IndianRupee />,
           },
           { path: "/admin/users", label: "Users", icon: <FaUser /> },
         ];
@@ -102,22 +103,22 @@ const Navbar: React.FC = () => {
           {
             path: "/supplier/catalog",
             label: "My Catalog",
-            icon: <FaCapsules />,
+            icon: <FaShoppingCart />,
           },
           {
             path: "/supplier/supplies/create",
             label: "Create Supply",
-            icon: <FaTachometerAlt />,
+            icon: <FaPlus />,
           },
           {
             path: "/supplier/supplies",
             label: "My Supplies",
-            icon: <FaCapsules />,
+            icon: <Truck />,
           },
           {
             path: "/supplier/enquiries",
             label: "Admin Enquiries",
-            icon: <FaPlus />,
+            icon: <FaExclamationCircle />,
           },
         ];
       case "user":
