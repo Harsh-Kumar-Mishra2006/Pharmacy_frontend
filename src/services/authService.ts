@@ -9,6 +9,8 @@ import {
   type ApiResponse,
   type User,
   type UserRole,
+  type CreateSupplierRequest,          
+  type CreateSupplierResponse,  
 } from '../types';
 
 class AuthService {
@@ -75,6 +77,41 @@ class AuthService {
 
   // ---------- Admin only ----------
 
+    // ---------- Admin only ----------
+
+  /**
+   * Admin creates a supplier — the backend also creates the login
+   * credentials (User with role='supplier').
+   *
+   * POST /api/auth/suppliers
+   * Access: Private/Admin
+   */
+  public async createSupplier(
+    data: CreateSupplierRequest,
+  ): Promise<ApiResponse<CreateSupplierResponse>> {
+    try {
+      return await Api.post<CreateSupplierResponse>('/auth/suppliers', data);
+    } catch (error: any) {
+      console.error('Create supplier service error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all users with role='supplier' (active only).
+   *
+   * GET /api/auth/suppliers
+   * Access: Private/Admin
+   */
+  public async getSuppliers(): Promise<ApiResponse<User[]>> {
+    try {
+      return await Api.get<User[]>('/auth/suppliers');
+    } catch (error: any) {
+      console.error('Get suppliers service error:', error);
+      throw error;
+    }
+  }
+
   public async getAllUsers(): Promise<ApiResponse<User[]>> {
     try {
       return await Api.get<User[]>('/auth/users');
@@ -140,6 +177,7 @@ class AuthService {
       throw error;
     }
   }
+  
 }
 
 export default new AuthService();

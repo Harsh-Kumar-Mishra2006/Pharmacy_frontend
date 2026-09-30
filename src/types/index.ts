@@ -58,6 +58,56 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+// Add this below the existing RegisterRequest / UpdateProfileRequest blocks
+
+export interface Supplier {
+  id: string;
+  user_id: string;
+  company_name: string;
+  contact_person?: string;
+  gst_number?: string;
+  license_number?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  country?: string;
+  website?: string;
+  notes?: string;
+  is_active: boolean;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+  user?: User;
+}
+
+/** Payload sent by admin to create a supplier + its login credentials */
+export interface CreateSupplierRequest {
+  // User credentials (login)
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+
+  // Supplier business details
+  company_name: string;
+  contact_person?: string;
+  gst_number?: string;
+  license_number?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  country?: string;
+  website?: string;
+  notes?: string;
+}
+
+export interface CreateSupplierResponse {
+  user: User;
+  supplier: Supplier;
+}
+
 // ============================================================
 // MEDICINE TYPES (Admin-owned catalog only)
 // ============================================================
@@ -581,7 +631,6 @@ export interface PaginatedResponse<T = any> {
 // ============================================================
 // CONTEXT TYPES
 // ============================================================
-
 export interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -594,9 +643,13 @@ export interface AuthContextType {
   updateProfile: (data: UpdateProfileRequest) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   getProfile: () => Promise<void>;
+
+  // Admin-only
+  createSupplier: (data: CreateSupplierRequest) => Promise<CreateSupplierResponse>;
+  getSuppliers: () => Promise<User[]>;
+
   clearError: () => void;
 }
-
 export interface MedicineContextType {
   medicines: Medicine[];
   selectedMedicine: Medicine | null;

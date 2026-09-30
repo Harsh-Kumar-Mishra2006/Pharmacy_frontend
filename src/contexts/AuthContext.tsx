@@ -11,6 +11,8 @@ import {
   type User,
   type RegisterRequest,
   type UpdateProfileRequest,
+  type CreateSupplierRequest,
+  type CreateSupplierResponse,
 } from "../types";
 import AuthService from "../services/authService";
 
@@ -213,6 +215,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // ---------- Admin: create supplier ----------
+  const createSupplier = async (
+    data: CreateSupplierRequest,
+  ): Promise<CreateSupplierResponse> => {
+    if (!token) throw new Error("Not authenticated");
+    if (user?.role !== "admin") throw new Error("Admin access required");
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await AuthService.createSupplier(data);
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message || "Failed to create supplier");
+    } catch (err: any) {
+      const message = err.message || "Failed to create supplier";
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ---------- Admin: list suppliers ----------
+  const getSuppliers = async (): Promise<User[]> => {
+    if (!token) throw new Error("Not authenticated");
+    if (user?.role !== "admin") throw new Error("Admin access required");
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await AuthService.getSuppliers();
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : [];
+      }
+      throw new Error(response.message || "Failed to fetch suppliers");
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch suppliers");
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const contextValue: AuthContextType = {
     user,
     token,
@@ -226,6 +273,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     changePassword,
     getProfile,
     clearError,
+    createSupplier,
+    getSuppliers,
   };
 
   return (
