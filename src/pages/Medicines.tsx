@@ -320,8 +320,8 @@ const Medicines: React.FC = () => {
                       <div>
                         <p className="text-lg font-bold text-light-orange">
                           {m.min_price !== m.max_price && m.max_price != null
-                            ? `$${displayPrice.toFixed(2)} – $${m.max_price!.toFixed(2)}`
-                            : `$${displayPrice.toFixed(2)}`}
+                            ? `₹${displayPrice.toFixed(2)} – ₹${m.max_price!.toFixed(2)}`
+                            : `₹${displayPrice.toFixed(2)}`}
                         </p>
                       </div>
                       <div className="text-right">
@@ -419,7 +419,7 @@ const Medicines: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-3xl font-bold text-light-orange">
-                      ${(selectedMedicine.min_price ?? 0).toFixed(2)}
+                      ₹{(selectedMedicine.min_price ?? 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="text-right">
@@ -557,7 +557,7 @@ const Medicines: React.FC = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Total</span>
                 <span className="font-bold text-light-orange text-lg">
-                  ${((purchaseModal.min_price ?? 0) * purchaseQty).toFixed(2)}
+                  ₹{((purchaseModal.min_price ?? 0) * purchaseQty).toFixed(2)}
                 </span>
               </div>
             </div>
