@@ -13,6 +13,8 @@ import {
   type UpdateMedicineRequest,
   type MedicineFilters,
   type MedicineStatistics,
+  type MedicineStockItem,
+  type MedicineStockSummary,
 } from "../types";
 import MedicineService from "../services/medicineService";
 import { useAuth } from "./AuthContext";
@@ -35,6 +37,15 @@ interface MedicineContextType {
   deleteMedicine: (id: string) => Promise<void>;
   getStatistics: () => Promise<void>;
   searchMedicines: (searchTerm: string) => Promise<void>;
+
+  getMedicineStock: (filters?: {
+    category?: string;
+    search?: string;
+    in_stock?: boolean;
+  }) => Promise<{
+    data: MedicineStockItem[];
+    summary: MedicineStockSummary | null;
+  }>;
 
   clearSelected: () => void;
   clearError: () => void;
@@ -252,6 +263,30 @@ export const MedicineProvider: React.FC<MedicineProviderProps> = ({
       setIsLoading(false);
     }
   };
+  const getMedicineStock = async (filters?: {
+    category?: string;
+    search?: string;
+    in_stock?: boolean;
+  }): Promise<{
+    data: MedicineStockItem[];
+    summary: MedicineStockSummary | null;
+  }> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await MedicineService.getMedicineStock(filters);
+      return {
+        data: response.data || [],
+        summary: response.summary || null,
+      };
+    } catch (err: any) {
+      console.error("Get medicine stock error:", err);
+      setError(err.message || "Failed to fetch stock");
+      return { data: [], summary: null };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const clearSelected = (): void => setSelectedMedicine(null);
   const clearError = (): void => setError(null);
@@ -271,6 +306,7 @@ export const MedicineProvider: React.FC<MedicineProviderProps> = ({
     getStatistics,
     searchMedicines,
     getAvailableMedicines,
+    getMedicineStock,
     clearSelected,
     clearError,
   };

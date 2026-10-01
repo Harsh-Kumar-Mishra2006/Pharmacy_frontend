@@ -8,6 +8,7 @@ import {
   type UpdateMedicineRequest,
   type MedicineFilters,
   type MedicineStatistics,
+  type MedicineStockResponse,
 } from '../types';
 
 
@@ -138,6 +139,28 @@ class MedicineService {
       throw error;
     }
   }
+
+  public async getMedicineStock(filters?: {
+  category?: string;
+  search?: string;
+  in_stock?: boolean;
+}): Promise<MedicineStockResponse> {
+  try {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
+      });
+    }
+    const url = `/medicines/stock${params.toString() ? `?${params.toString()}` : ''}`;
+    return await Api.get<MedicineStockResponse>(url) as unknown as MedicineStockResponse;
+  } catch (error: any) {
+    console.error('Get medicine stock error:', error);
+    throw error;
+  }
+}
 }
 
 

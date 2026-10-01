@@ -665,6 +665,11 @@ export interface MedicineContextType {
   deleteMedicine: (id: string) => Promise<void>;
   getStatistics: () => Promise<void>;
   searchMedicines: (searchTerm: string) => Promise<void>;
+  getMedicineStock: (filters?: {
+    category?: string;
+    search?: string;
+    in_stock?: boolean;
+  }) => Promise<{ data: MedicineStockItem[]; summary: MedicineStockSummary | null }>;
 
   clearSelected: () => void;
   clearError: () => void;
@@ -803,3 +808,44 @@ export interface AvailableMedicineFilters {
   limit?: number;
 }
 
+export interface MedicineStockItem {
+  id: string;
+  name: string;
+  generic_name?: string;
+  brand_name?: string;
+  category: string;
+  images: string[];
+
+  available_quantity: number;
+  pending_quantity: number;
+  received_quantity: number;
+  total_supplied: number;
+
+  min_price: number;
+  stock_value: number;
+
+  supply_count: number;
+  total_sold: number;
+  verified_sold: number;
+
+  in_stock: boolean;
+  is_low_stock: boolean;
+  is_out_of_stock: boolean;
+}
+
+export interface MedicineStockSummary {
+  total_medicines: number;
+  in_stock: number;
+  low_stock: number;
+  out_of_stock: number;
+  total_stock_value: number;
+  total_units_available: number;
+  total_units_sold: number;
+}
+
+export interface MedicineStockResponse {
+  success: boolean;
+  count: number;
+  summary: MedicineStockSummary;
+  data: MedicineStockItem[];
+}

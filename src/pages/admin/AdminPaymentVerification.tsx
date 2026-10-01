@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import { IndianRupee } from "lucide-react";
 import { type Purchase } from "../../types";
+import MedicineStock from "./MedicineStock";
 
 const AdminPaymentVerification: React.FC = () => {
   const {
@@ -496,6 +497,7 @@ const AdminPaymentVerification: React.FC = () => {
           </div>
         </div>
       )}
+      <MedicineStock />
     </div>
   );
 };
