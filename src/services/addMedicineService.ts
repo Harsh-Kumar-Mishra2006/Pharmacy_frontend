@@ -1,7 +1,6 @@
 import Api from '../api/api';
 import {
   type AddMedicine,
-  type AddMedicineContextType,
   type AddMedicineFilters,
   type AddMedicineListResponse,
   type AddMedicineOverviewResponse,
