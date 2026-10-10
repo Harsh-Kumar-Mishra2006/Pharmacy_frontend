@@ -849,3 +849,227 @@ export interface MedicineStockResponse {
   summary: MedicineStockSummary;
   data: MedicineStockItem[];
 }
+
+// ============================================================
+// ADD MEDICINE TYPES (Stock-managed catalog — new feature)
+// ============================================================
+
+export type AddMedicineType =
+  | 'Tablet'
+  | 'Capsule'
+  | 'Syrup'
+  | 'Injection'
+  | 'Ointment'
+  | 'Drops'
+  | 'Cream'
+  | 'Powder'
+  | 'Other';
+
+export interface AddMedicine {
+  id: string;
+  name: string;
+  type: string;
+  company: string;
+  genre: string;
+  strength?: string | null;
+  description?: string | null;
+
+  box_size: number;
+  total_available: number;
+  number_of_boxes: number;
+  low_stock_threshold: number;
+
+  images: string[];
+  is_available: boolean;
+
+  created_by: string;
+  creator?: User;
+
+  created_at?: string;
+  updated_at?: string;
+
+  // Relations (when included)
+  batches?: StockBatch[];
+  adjustments?: StockAdjustment[];
+}
+
+export interface StockBatch {
+  id: string;
+  medicine_id: string;
+  quantity_received: number;
+  quantity_remaining: number;
+  batch_number?: string | null;
+  expiry_date?: string | null;
+  received_date: string;
+  supplier_name?: string | null;
+  unit_cost?: number | string | null;
+  notes?: string | null;
+  added_by: string;
+  added_by_user?: User;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StockAdjustment {
+  id: string;
+  medicine_id: string;
+  batch_id?: string | null;
+  adjustment_type: 'increase' | 'decrease';
+  quantity: number;
+  reason: string;
+  notes?: string | null;
+  stock_before: number;
+  stock_after: number;
+  adjusted_by: string;
+  adjusted_by_user?: User;
+  batch?: Pick<StockBatch, 'id' | 'batch_number'>;
+  medicine?: Pick<AddMedicine, 'id' | 'name' | 'company'>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateAddMedicineRequest {
+  name: string;
+  type: string;
+  company: string;
+  genre: string;
+  strength?: string;
+  description?: string;
+  box_size: number;
+  low_stock_threshold?: number;
+
+  // Initial stock (optional)
+  initial_quantity?: number;
+  batch_number?: string;
+  expiry_date?: string;
+  supplier_name?: string;
+  unit_cost?: number;
+  notes?: string;
+
+  // Images uploaded via multipart
+  images?: File[];
+}
+
+export interface UpdateAddMedicineRequest {
+  name?: string;
+  type?: string;
+  company?: string;
+  genre?: string;
+  strength?: string;
+  description?: string;
+  box_size?: number;
+  low_stock_threshold?: number;
+  is_available?: boolean;
+  images?: File[];
+  replace_images?: boolean;
+}
+
+export interface AddStockBatchRequest {
+  quantity_received: number;
+  batch_number?: string;
+  expiry_date?: string;
+  received_date?: string;
+  supplier_name?: string;
+  unit_cost?: number;
+  notes?: string;
+}
+
+export interface AdjustStockRequest {
+  quantity: number;
+  adjustment_type: 'increase' | 'decrease';
+  reason?: string;
+  notes?: string;
+  batch_id?: string;
+}
+
+export interface AddMedicineOverviewItem {
+  id: string;
+  name: string;
+  type: string;
+  company: string;
+  genre: string;
+  strength?: string | null;
+  box_size: number;
+  total_available: number;
+  number_of_boxes: number;
+  low_stock_threshold: number;
+  batch_count: number;
+  expiring_soon: number;
+  expired_batches: number;
+  is_low_stock: boolean;
+  is_out_of_stock: boolean;
+}
+
+export interface AddMedicineOverviewSummary {
+  total_medicines: number;
+  total_units: number;
+  in_stock: number;
+  low_stock: number;
+  out_of_stock: number;
+  expiring_soon: number;
+  expired_batches: number;
+}
+
+export interface AddMedicineOverviewResponse {
+  success: boolean;
+  summary: AddMedicineOverviewSummary;
+  count: number;
+  data: AddMedicineOverviewItem[];
+}
+
+export interface AddMedicineFilters {
+  genre?: string;
+  type?: string;
+  company?: string;
+  search?: string;
+  low_stock?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface AddMedicineListResponse {
+  success: boolean;
+  count: number;
+  data: AddMedicine[];
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  };
+}
+
+export interface AddMedicineContextType {
+  medicines: AddMedicine[];
+  overview: AddMedicineOverviewItem[];
+  overviewSummary: AddMedicineOverviewSummary | null;
+  selectedMedicine: AddMedicine | null;
+  adjustments: StockAdjustment[];
+
+  isLoading: boolean;
+  error: string | null;
+
+  // CRUD
+  addMedicine: (data: CreateAddMedicineRequest) => Promise<AddMedicine>;
+  updateMedicine: (id: string, data: UpdateAddMedicineRequest) => Promise<AddMedicine>;
+  deleteMedicine: (id: string) => Promise<void>;
+
+  // Lists
+  getMedicines: (filters?: AddMedicineFilters) => Promise<AddMedicineListResponse>;
+  getMedicineById: (id: string) => Promise<AddMedicine>;
+  getStockOverview: () => Promise<AddMedicineOverviewResponse>;
+  getAdjustmentHistory: (filters?: {
+    medicine_id?: string;
+    adjustment_type?: 'increase' | 'decrease';
+    reason?: string;
+    page?: number;
+    limit?: number;
+  }) => Promise<void>;
+
+  // Stock ops
+  addStockBatch: (medicineId: string, data: AddStockBatchRequest) => Promise<void>;
+  adjustStock: (medicineId: string, data: AdjustStockRequest) => Promise<void>;
+
+  clearSelected: () => void;
+  clearError: () => void;
+}
