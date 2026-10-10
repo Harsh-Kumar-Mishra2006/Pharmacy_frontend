@@ -90,12 +90,12 @@ const Register: React.FC = () => {
     icon: React.JSX.Element;
     desc: string;
   }[] = [
-    {
-      value: "user",
-      label: "Customer",
-      icon: <FaUser />,
-      desc: "Buy medicines",
-    },
+    // {
+    //   value: "user",
+    //   label: "Customer",
+    //   icon: <FaUser />,
+    //   desc: "Buy medicines",
+    // },
     // {
     //   value: "supplier",
     //   label: "Supplier",
@@ -129,9 +129,9 @@ const Register: React.FC = () => {
           {/* Role selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Account Type *
+              {/* Account Type * */}
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {roleOptions.map((option) => (
                 <button
                   key={option.value}

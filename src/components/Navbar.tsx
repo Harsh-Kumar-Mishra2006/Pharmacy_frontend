@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import {
   FaUser,
   FaSignOutAlt,
+  FaBox,
   FaBars,
   FaPlus,
   FaTimes,
@@ -14,7 +15,8 @@ import {
   FaExclamationCircle,
 } from "react-icons/fa";
 
-import { IndianRupee, Truck } from "lucide-react";
+import { Truck } from "lucide-react";
+// import { IndianRupee } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -71,37 +73,39 @@ const Navbar: React.FC = () => {
           //   label: "Medicines",
           //   icon: <FaCapsules />,
           // },
-          {
-            path: "/admin/medicines/add",
-            label: "Add Medicines",
-            icon: <FaPlus />,
-          },
-          {
-            path: "/add-supplier",
-            label: "Add Suppliers",
-            icon: <FaPlus />,
-          },
           // {
-          //   path: "/admin/medicines",
-          //   label: "My Medicines",
-          //   icon: <FaCapsules />,
+          //   path: "/admin/medicines/add",
+          //   label: "Add Medicines",
+          //   icon: <FaPlus />,
           // },
+          // {
+          //   path: "/add-supplier",
+          //   label: "Add Suppliers",
+          //   icon: <FaPlus />,
+          // },
+          // {
+          //   path: "/admin/supplies",
+          //   label: "Supply Approvals",
+          //   icon: <FaBars />,
+          // },
+          // {
+          //   path: "/admin/enquiries",
+          //   label: "Enquiries",
+          //   icon: <FaExclamationCircle />,
+          // },
+          // {
+          //   path: "/admin/payment-verification",
+          //   label: "Payments",
+          //   icon: <IndianRupee />,
+          // },
+          // { path: "/admin/users", label: "Users", icon: <FaUser /> },
+
+          { path: "/admin/stock", label: "Stock", icon: <FaBox /> },
           {
-            path: "/admin/supplies",
-            label: "Supply Approvals",
-            icon: <FaBars />,
+            path: "/admin/add-medicine-stock",
+            label: "Add Medicine Stock",
+            icon: <FaPlus />,
           },
-          {
-            path: "/admin/enquiries",
-            label: "Enquiries",
-            icon: <FaExclamationCircle />,
-          },
-          {
-            path: "/admin/payment-verification",
-            label: "Payments",
-            icon: <IndianRupee />,
-          },
-          { path: "/admin/users", label: "Users", icon: <FaUser /> },
         ];
       case "supplier":
         return [
