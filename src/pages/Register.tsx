@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { type UserRole } from "../types";
 import {
   FaUser,
   FaEnvelope,
@@ -12,7 +11,6 @@ import {
   FaEye,
   FaEyeSlash,
   FaExclamationCircle,
-  FaUserShield,
 } from "react-icons/fa";
 
 const Register: React.FC = () => {
@@ -26,7 +24,6 @@ const Register: React.FC = () => {
     confirmPassword: "",
     phone: "",
     address: "",
-    role: "user" as UserRole,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +66,7 @@ const Register: React.FC = () => {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
-        role: formData.role,
+        role: "admin", // 🔒 only admin can register now
         phone: formData.phone || undefined,
         address: formData.address || undefined,
       });
@@ -83,39 +80,16 @@ const Register: React.FC = () => {
 
   const displayError = localError || error;
 
-  // Role options with icons
-  const roleOptions: {
-    value: UserRole;
-    label: string;
-    icon: React.JSX.Element;
-    desc: string;
-  }[] = [
-    // {
-    //   value: "user",
-    //   label: "Customer",
-    //   icon: <FaUser />,
-    //   desc: "Buy medicines",
-    // },
-    // {
-    //   value: "supplier",
-    //   label: "Supplier",
-    //   icon: <FaTruck />,
-    //   desc: "Sell medicines",
-    // },
-    {
-      value: "admin",
-      label: "Admin",
-      icon: <FaUserShield />,
-      desc: "Manage platform",
-    },
-  ];
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-light-orange/10 via-pink/10 to-sky-blue/10 pt-20 py-8 px-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
-          <p className="text-gray-600 mt-2">Join OurPharma today</p>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Create Admin Account
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Join OurPharma as an administrator
+          </p>
         </div>
 
         {displayError && (
@@ -126,35 +100,6 @@ const Register: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Role selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {/* Account Type * */}
-            </label>
-            <div className="grid grid-cols-1 gap-2">
-              {roleOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() =>
-                    setFormData({ ...formData, role: option.value })
-                  }
-                  className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
-                    formData.role === option.value
-                      ? "border-light-orange bg-light-orange/10 text-light-orange"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300"
-                  }`}
-                >
-                  <span className="text-lg">{option.icon}</span>
-                  <span className="text-xs font-medium">{option.label}</span>
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-1 text-center">
-              {roleOptions.find((r) => r.value === formData.role)?.desc}
-            </p>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Full Name *
